@@ -17,7 +17,7 @@
   'use strict';
 
   var SUPABASE_URL = 'https://vumaeclogkcoheewyulp.supabase.co';
-  var SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+  var SUPABASE_ANON_KEY = 'sb_publishable_3DrJa6HTF6gJgTwBbW3n-A_GBDRYUsz';
 
   var isPlaceholder = /YOUR[-_]/.test(SUPABASE_URL) || /YOUR[-_]/.test(SUPABASE_ANON_KEY);
 
