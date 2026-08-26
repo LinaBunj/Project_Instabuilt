@@ -16,6 +16,10 @@ PAGES = [
     "signature-homes.html", "bathpods.html", "construction-system.html",
     "sustainability.html", "about-us.html", "career.html",
     "innovation-center.html", "blog.html", "news.html", "contact.html", "404.html",
+    "login.html", "signup.html",
+    "dashboard/index.html", "dashboard/house-designer.html",
+    "dashboard/price-calculator.html", "dashboard/profile.html",
+    "dashboard/coming-soon.html",
 ]
 
 

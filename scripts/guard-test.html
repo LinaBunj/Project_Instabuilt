@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>auth-guard test harness</title>
+</head>
+<body>
+  <pre id="results">running…</pre>
+  <script>
+    // Stub the INSTABUILT namespace before auth-guard.js loads, so its
+    // auto-run uses a null client and the redirect is captured, not navigated.
+    window.INSTABUILT = {
+      redirect: function (url) { window.__redirected = url; },
+      supabase: null
+    };
+  </script>
+  <script src="../js/auth-guard.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var out = document.getElementById('results');
+      out.textContent = '';
+
+      function makeClient(session) {
+        return { auth: { getSession: function () {
+          return Promise.resolve({ data: { session: session } });
+        } } };
+      }
+
+      function reset() {
+        window.__redirected = null;
+        window.INSTABUILT.session = null;
+        document.documentElement.classList.remove('authed');
+      }
+
+      function runCase(label, client) {
+        reset();
+        window.INSTABUILT.guard(client);
+        return new Promise(function (r) { setTimeout(r, 40); }).then(function () {
+          out.textContent += label +
+            ': redirect=' + (window.__redirected || 'none') +
+            ' | authedClass=' + document.documentElement.classList.contains('authed') +
+            ' | sessionSet=' + (!!window.INSTABUILT.session) + '\n';
+        });
+      }
+
+      (async function () {
+        await runCase('LOGGED_OUT', makeClient(null));
+        await runCase('LOGGED_IN ', makeClient({ user: { id: 'u1', email: 'test@instabuilt.com' } }));
+        reset();
+        window.INSTABUILT.guard(null);
+        await new Promise(function (r) { setTimeout(r, 40); });
+        out.textContent += 'NO_CLIENT : redirect=' + (window.__redirected || 'none') + '\n';
+      })();
+    })();
+  </script>
+</body>
+</html>

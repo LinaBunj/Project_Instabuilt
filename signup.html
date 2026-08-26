@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create your account — InstaBuilt</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f6f2eb">
+  <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..650&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <main id="main" class="auth-wrap">
+    <div class="auth-card">
+      <a class="auth-brand" href="index.html" aria-label="InstaBuilt — home">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#26221C"/><g fill="#F6F2EB"><rect x="7" y="7" width="8" height="8" rx="1.5"/><rect x="17" y="7" width="8" height="8" rx="1.5"/><rect x="7" y="17" width="8" height="8" rx="1.5"/><rect x="17" y="17" width="8" height="8" rx="1.5" fill="#A65A3B"/></g></svg>
+        <span class="brand-name">Insta<b>Built</b></span>
+      </a>
+
+      <h1>Create your account</h1>
+      <p class="auth-sub">Join InstaBuilt and design your build.</p>
+
+      <div class="config-notice" id="config-notice">
+        Supabase isn't configured yet. Add your project URL and anon key in
+        <code>js/supabase-client.js</code>, then run <code>supabase/schema.sql</code>.
+      </div>
+
+      <form data-auth="signup" novalidate>
+        <div class="field">
+          <label for="name">Full name</label>
+          <input type="text" id="name" name="name" autocomplete="name" placeholder="Jane Doe">
+        </div>
+        <div class="field">
+          <label for="email">Email <span class="req" aria-hidden="true">*</span></label>
+          <input type="email" id="email" name="email" autocomplete="email" required placeholder="you@example.com">
+        </div>
+        <div class="field">
+          <label for="password">Password <span class="req" aria-hidden="true">*</span></label>
+          <input type="password" id="password" name="password" autocomplete="new-password" required minlength="6" placeholder="At least 6 characters">
+        </div>
+        <p class="form-status" role="status" aria-live="polite"></p>
+        <button class="btn btn-primary btn-lg" type="submit">Create account<span class="arrow" aria-hidden="true">→</span></button>
+      </form>
+
+      <p class="auth-alt">Already have an account? <a href="login.html">Sign in</a></p>
+      <a class="auth-back" href="index.html">← Back to site</a>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var A = window.INSTABUILT.auth;
+      var form = document.querySelector('form[data-auth="signup"]');
+
+      if (window.INSTABUILT.config && window.INSTABUILT.config.isPlaceholder) {
+        document.getElementById('config-notice').classList.add('is-visible');
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+        A.clearStatus(form);
+        A.disableSubmit(form, true);
+        A.signup(form.email.value.trim(), form.password.value, { name: form.name.value.trim() })
+          .then(function (res) {
+            if (res.error) { A.setStatus(form, res.error.message, false); return; }
+            if (res.data && res.data.session) {
+              A.setAuthFlag(true);
+              window.location.href = A.safeNext() || '/dashboard/index.html';
+            } else {
+              A.setStatus(form, 'Account created — check your email to confirm your address, then sign in.', true);
+            }
+          })
+          .catch(function (err) {
+            A.setStatus(form, (err && err.message) || 'Unable to create your account.', false);
+          })
+          .finally(function () { A.disableSubmit(form, false); });
+      });
+    })();
+  </script>
+</body>
+</html>

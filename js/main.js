@@ -120,6 +120,17 @@
     });
   });
 
+  /* ---------- Design-CTA rewiring (Phase 2) ---------- */
+  // "Design yours" links on product pages resolve to the dashboard when the
+  // user is signed in, otherwise to login. The flag is set/cleared by auth.js
+  // and mirrored against the real session via onAuthStateChange; the ultimate
+  // gate is auth-guard.js on the dashboard itself.
+  var isAuthed = false;
+  try { isAuthed = window.localStorage.getItem('instabuilt_authed') === '1'; } catch (e) { /* ignore */ }
+  document.querySelectorAll('a.js-design-cta').forEach(function (a) {
+    if (isAuthed) a.setAttribute('href', 'dashboard/house-designer.html');
+  });
+
   /* ---------- Footer year ---------- */
   document.querySelectorAll('[data-year]').forEach(function (el) {
     el.textContent = String(new Date().getFullYear());

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile — InstaBuilt</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f6f2eb">
+  <link rel="icon" type="image/svg+xml" href="../images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400..650&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <div class="auth-loader" role="status" aria-live="polite"><div class="spinner" aria-hidden="true"></div><p>Signing you in…</p></div>
+
+  <div class="app">
+    <header class="dash-topbar">
+      <a class="brand" href="../index.html" aria-label="InstaBuilt — home">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#26221C"/><g fill="#F6F2EB"><rect x="7" y="7" width="8" height="8" rx="1.5"/><rect x="17" y="7" width="8" height="8" rx="1.5"/><rect x="7" y="17" width="8" height="8" rx="1.5"/><rect x="17" y="17" width="8" height="8" rx="1.5" fill="#A65A3B"/></g></svg>
+        <span class="brand-name">Insta<b>Built</b></span>
+      </a>
+      <div class="dash-topbar__right">
+        <span class="dash-user" data-user-email>…</span>
+        <button class="btn btn-ghost btn-sm" type="button" data-signout>Sign out</button>
+      </div>
+    </header>
+    <div class="dash">
+      <nav class="dash-sidebar" aria-label="Dashboard">
+        <ul class="dash-nav">
+          <li><a href="index.html">Overview</a></li>
+          <li><a href="house-designer.html">House Designer</a></li>
+          <li><a href="price-calculator.html">Price Calculator</a></li>
+          <li class="dash-nav__label">Coming soon</li>
+          <li><a href="coming-soon.html?feature=energy">Energy Calculator</a></li>
+          <li><a href="coming-soon.html?feature=smart-home">Smart-Home</a></li>
+          <li><a href="coming-soon.html?feature=tracking">Project Tracking</a></li>
+          <li><a href="coming-soon.html?feature=ai">AI Agent</a></li>
+          <li class="dash-nav__label">Account</li>
+          <li><a href="profile.html" aria-current="page">Profile</a></li>
+        </ul>
+      </nav>
+      <main class="dash-main" id="main">
+        <h1>Profile</h1>
+        <p class="lead">Your account details and saved designs.</p>
+
+        <div class="dash-card">
+          <h2>Account</h2>
+          <div class="profile-block">
+            <span class="label">Name</span>
+            <span class="value" id="profile-name">—</span>
+          </div>
+          <div class="profile-block mt-2">
+            <span class="label">Email</span>
+            <span class="value" id="profile-email">—</span>
+          </div>
+        </div>
+
+        <div class="dash-card">
+          <h2>Saved designs</h2>
+          <ul id="saved-designs"></ul>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase-client.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script>
+    (function () {
+      'use strict';
+      var IB = window.INSTABUILT;
+
+      function esc(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      IB.ready.then(function (session) {
+        var user = session.user;
+        document.getElementById('profile-email').textContent = user.email || '—';
+        var meta = user.user_metadata || {};
+        document.getElementById('profile-name').textContent = meta.name || '—';
+
+        var list = document.getElementById('saved-designs');
+        IB.supabase.from('house_designs')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .then(function (res) {
+            if (res.error) {
+              list.innerHTML = '<p class="muted">Could not load saved designs.</p>';
+              return;
+            }
+            var rows = res.data || [];
+            if (!rows.length) {
+              list.innerHTML = '<p class="muted">No saved designs yet. <a href="house-designer.html">Create your first</a>.</p>';
+              return;
+            }
+            list.innerHTML = '';
+            rows.forEach(function (d) {
+              var li = document.createElement('li');
+              li.className = 'saved-design';
+              var date = d.created_at ? new Date(d.created_at).toLocaleDateString() : '';
+              li.innerHTML =
+                '<span class="saved-design__meta"><strong>' + esc(d.product_line) + '</strong> · ' + esc(d.size) + '</span>' +
+                '<span class="saved-design__date">' + esc(date) + '</span>' +
+                '<a class="btn btn-sm btn-ghost" href="price-calculator.html?design=' + encodeURIComponent(d.id) + '">Estimate</a>';
+              list.appendChild(li);
+            });
+          });
+      });
+    })();
+  </script>
+</body>
+</html>
