@@ -158,13 +158,24 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 500; line-height
 /* ---------- Header & navigation ---------- */
 .site-header {
   position: sticky; top: 0; z-index: 100;
-  background: rgba(255, 255, 255, 0.86);
+  background: transparent;
   backdrop-filter: saturate(1.1) blur(12px);
   -webkit-backdrop-filter: saturate(1.1) blur(12px);
   border-bottom: 1px solid transparent;
   transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
-.site-header.scrolled { border-bottom-color: var(--line); background: rgba(255, 255, 255, 0.95); }
+
+/* Transparent header for home page with hero background */
+.site-header--transparent {
+  background: transparent;
+  border-bottom-color: transparent;
+}
+
+/* Scrolled state - semi-transparent white background */
+.site-header.scrolled {
+  background: rgba(255, 255, 255, 0.92);
+  border-bottom-color: var(--line);
+}
 .header-inner { display: flex; align-items: center; gap: 1.5rem; height: var(--header-h); }
 
 .brand { display: inline-flex; align-items: center; gap: 0.7rem; text-decoration: none; }
