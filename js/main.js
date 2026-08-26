@@ -10,10 +10,38 @@
 
   /* ---------- Sticky header shadow ---------- */
   var header = document.getElementById('site-header');
+
+  // Check if we're on the home page (has hero-home--photo)
+  var isHomePage = document.querySelector('.hero-home--photo') !== null;
+
+  // Get header height
+  var headerHeight = header ? header.offsetHeight : 74;
+
+  if (header && isHomePage) {
+    // Add transparent class initially for home page
+    header.classList.add('site-header--transparent');
+  }
+
   function onScroll() {
     if (!header) return;
-    if (window.scrollY > 8) header.classList.add('scrolled');
-    else header.classList.remove('scrolled');
+  
+    if (isHomePage) {
+      // On home page: stay transparent until scrolled past hero
+      var heroHeight = document.querySelector('.hero-home--photo');
+      var heroBottom = heroHeight ? heroHeight.getBoundingClientRect().bottom : 0;
+    
+      if (window.scrollY > 8 && heroBottom <= headerHeight) {
+        header.classList.remove('site-header--transparent');
+        header.classList.add('scrolled');
+      } else {
+        header.classList.remove('scrolled');
+        header.classList.add('site-header--transparent');
+      }
+    } else {
+      // On other pages: show background immediately on scroll
+      if (window.scrollY > 8) header.classList.add('scrolled');
+      else header.classList.remove('scrolled');
+    }
   }
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
