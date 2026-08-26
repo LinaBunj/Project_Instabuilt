@@ -23,26 +23,18 @@
   }
 
   function onScroll() {
-    if (!header) return;
-  
-    if (isHomePage) {
-      // On home page: stay transparent until scrolled past hero
-      var heroHeight = document.querySelector('.hero-home--photo');
-      var heroBottom = heroHeight ? heroHeight.getBoundingClientRect().bottom : 0;
-    
-      if (window.scrollY > 8 && heroBottom <= headerHeight) {
-        header.classList.remove('site-header--transparent');
-        header.classList.add('scrolled');
-      } else {
+      if (!header) return;
+
+      if (isHomePage) {
+        // On home page: stay transparent permanently so hero background shows through
         header.classList.remove('scrolled');
         header.classList.add('site-header--transparent');
+      } else {
+        // On other pages: show background immediately on scroll
+        if (window.scrollY > 8) header.classList.add('scrolled');
+        else header.classList.remove('scrolled');
       }
-    } else {
-      // On other pages: show background immediately on scroll
-      if (window.scrollY > 8) header.classList.add('scrolled');
-      else header.classList.remove('scrolled');
     }
-  }
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
 
