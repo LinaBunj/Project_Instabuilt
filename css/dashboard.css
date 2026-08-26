@@ -33,7 +33,7 @@
 .auth-back:hover { color: var(--ink); }
 .config-notice {
   display: none;
-  background: #f3e6e6;
+  background: var(--clay-soft);
   color: var(--clay-deep);
   padding: 0.8rem 1rem;
   border-radius: var(--radius-sm);
@@ -126,7 +126,7 @@ html.authed .auth-loader { display: none; }
   font-size: 0.9rem; color: var(--ink-soft); cursor: pointer;
   transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease);
 }
-.check-chip input:checked + span { background: var(--clay); border-color: var(--clay); color: #fff7f2; }
+.check-chip input:checked + span { background: var(--clay); border-color: var(--clay); color: #ffffff; }
 .check-chip input:focus-visible + span { outline: 2px solid var(--clay); outline-offset: 2px; }
 
 .saved-design {
