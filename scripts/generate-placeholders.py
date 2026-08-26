@@ -99,11 +99,11 @@ IMAGES = [
     ("contact", "hero.svg", "Contact — Head office"),
 ]
 
-# Muted earth-tone washes (background gradient pairs), cycled for gentle variety.
+# Neutral light-gray washes (background gradient pairs), cycled for gentle variety.
 WASHES = [
-    ("#EBE4D6", "#DED3BE"),
-    ("#E4DBC9", "#D5C8AE"),
-    ("#DED5C2", "#CCBFA6"),
+    ("#f7f7f7", "#e9e9e9"),
+    ("#f0f0ec", "#e2e2dd"),
+    ("#f6f6f6", "#e6e6e6"),
 ]
 
 
@@ -147,8 +147,8 @@ def make_svg(full_label, c1, c2):
         title, subtitle = full_label, ""
     title = _esc(title)
     subtitle = _esc(subtitle)
-    line = "#8D806C"
-    ink = "#4A4236"
+    line = "#c9c9c9"
+    ink = "#0a0a0a"
     serif = "Georgia, 'Times New Roman', serif"
     # shrink title font if long
     fs = 58 if len(title) <= 26 else 46

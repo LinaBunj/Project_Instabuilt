@@ -130,6 +130,13 @@
   document.querySelectorAll('a.js-design-cta').forEach(function (a) {
     if (isAuthed) a.setAttribute('href', 'dashboard/house-designer.html');
   });
+  // Nav sign-in link: "Sign in" when logged out, "Dashboard" when logged in.
+  document.querySelectorAll('a.header-signin').forEach(function (a) {
+    if (isAuthed) {
+      a.setAttribute('href', 'dashboard/index.html');
+      a.textContent = 'Dashboard';
+    }
+  });
 
   /* ---------- Footer year ---------- */
   document.querySelectorAll('[data-year]').forEach(function (el) {
