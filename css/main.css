@@ -158,24 +158,63 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 500; line-height
 /* ---------- Header & navigation ---------- */
 .site-header {
   position: sticky; top: 0; z-index: 100;
-  background: transparent;
+  background: var(--bg);
   backdrop-filter: saturate(1.1) blur(12px);
   -webkit-backdrop-filter: saturate(1.1) blur(12px);
-  border-bottom: 1px solid transparent;
-  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+  border-bottom: 1px solid var(--line);
+  transition: border-color var(--dur) var(--ease),
+    background var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease),
+    padding var(--dur) var(--ease);
 }
 
-/* Transparent header for home page with hero background */
+/* Transparent header for home page hero — fully see-through glass on top of the photo */
 .site-header--transparent {
   background: transparent;
-  border-bottom-color: transparent;
+  border-bottom: 1px solid transparent;
+  box-shadow: none;
 }
 
-/* Scrolled state - semi-transparent white background */
-.site-header.scrolled {
-  background: rgba(255, 255, 255, 0.92);
-  border-bottom-color: var(--line);
+/* On the transparent home header, pull the nav elements into the on-dark palette
+   so they read cleanly against the dark hero photo + the subtle scrim. */
+.site-header--transparent .brand-name,
+.site-header--transparent .header-signin,
+.site-header--transparent .nav-link,
+.site-header--transparent .nav-toggle span,
+.site-header--transparent .nav-link .chev {
+  color: var(--on-dark);
 }
+.site-header--transparent .brand-name b { color: #c2d17e; }
+.site-header--transparent .nav-link[aria-current="page"] { color: #b7c77c; }
+.site-header--transparent .nav-link:hover,
+.site-header--transparent .nav-link:focus-visible { color: var(--on-dark); background: rgba(255, 255, 255, 0.06); }
+.site-header--transparent .header-signin:hover { color: #b7c77c; }
+
+/* Soft white glass when scrolled on home, or on every subpage scroll */
+.site-header.scrolled,
+.site-header:not(.site-header--transparent) {
+  background: rgba(255, 255, 255, 0.82);
+  border-bottom-color: var(--line);
+  box-shadow: var(--shadow-sm);
+}
+.site-header.scrolled .brand-name,
+.site-header:not(.site-header--transparent) .brand-name,
+.site-header.scrolled .header-signin,
+.site-header:not(.site-header--transparent) .header-signin,
+.site-header.scrolled .nav-link,
+.site-header:not(.site-header--transparent) .nav-link {
+  color: var(--ink-soft);
+}
+.site-header.scrolled .nav-link[aria-current="page"],
+.site-header:not(.site-header--transparent) .nav-link[aria-current="page"] { color: var(--clay-deep); }
+.site-header.scrolled .brand-name b,
+.site-header:not(.site-header--transparent) .brand-name b { color: var(--ink); }
+.site-header:not(.site-header--transparent) .nav-link:hover,
+.site-header:not(.site-header--transparent) .nav-link:focus-visible,
+.site-header.scrolled .nav-link:hover,
+.site-header.scrolled .nav-link:focus-visible { color: var(--ink); background: var(--bg-alt); }
+.site-header:not(.site-header--transparent) .header-signin:hover,
+.site-header.scrolled .header-signin:hover { color: var(--clay-deep); }
 .header-inner { display: flex; align-items: center; gap: 1.5rem; height: var(--header-h); }
 
 .brand { display: inline-flex; align-items: center; gap: 0.7rem; text-decoration: none; }
