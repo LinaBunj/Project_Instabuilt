@@ -26,9 +26,17 @@
       if (!header) return;
 
       if (isHomePage) {
-        // On home page: stay transparent permanently so hero background shows through
-        header.classList.remove('scrolled');
-        header.classList.add('site-header--transparent');
+        // Home: transparent while the hero photo is under the header, then
+        // switch to the solid glass bar once the hero has scrolled past.
+        var hero = document.querySelector('.hero-home--photo');
+        var pastHero = hero ? window.scrollY > (hero.offsetHeight - headerHeight) : window.scrollY > 8;
+        if (pastHero) {
+          header.classList.add('scrolled');
+          header.classList.remove('site-header--transparent');
+        } else {
+          header.classList.remove('scrolled');
+          header.classList.add('site-header--transparent');
+        }
       } else {
         // On other pages: show background immediately on scroll
         if (window.scrollY > 8) header.classList.add('scrolled');
