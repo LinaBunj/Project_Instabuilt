@@ -1,166 +1,223 @@
 /**
- * InstaBuilt — House Designer (Phase 2).
- * UI shell for choosing product line / size / materials / interior and saving
- * to the `house_designs` table. Mock options; wired to Supabase via RLS.
+ * InstaBuilt — House Designer (3D configurator) — entry module.
+ *
+ * Builds the options panel, lazy-inits the Three.js scene, drives orbit /
+ * walkthrough modes, and saves the selected options (not 3D state) to the
+ * `house_designs` table. If WebGL is unavailable the page falls back to the
+ * classic preset form (js/house-designer-fallback.js).
  */
-(function () {
+import * as THREE from 'three';
+import { PRODUCT_LINES, MATERIALS, INTERIOR_PACKAGES, SMART_HOME, DIMS, resolveConfig, toSavePayload } from './models-config.js';
+import { createScene } from './three-scene.js';
+import { createHouse, render, interiorBounds } from './house-configurator.js';
+import { createOrbitMode } from './orbit-mode.js';
+import { createWalkthroughMode } from './walkthrough-mode.js';
+
+(async function () {
   'use strict';
 
-  var IB = window.INSTABUILT;
+  if (!document.documentElement.classList.contains('webgl')) return;
 
-  // Shared with price-calculator.js (keep the two copies in sync).
-  var PRICING = {
-    base: {
-      'POP UP Solutions': 2200,
-      'Multistory Multifamily': 2600,
-      'Senior Housing': 2700,
-      'Micro Apartments': 2400,
-      'Traditional Homes': 2500,
-      'Signature Homes': 3200,
-      'Bathpods': 1800
-    },
-    materials: { 'Timber': 1.0, 'Render': 0.95, 'Brick-slip': 1.15, 'Metal': 1.25 },
-    interiors: [
-      { label: 'Full kitchen', cost: 12000, perArea: false },
-      { label: 'Premium Bathpod', cost: 9000, perArea: false },
-      { label: 'Smart-home package', cost: 8000, perArea: false },
-      { label: 'Oak flooring', cost: 45, perArea: true },
-      { label: 'Underfloor heating', cost: 55, perArea: true }
-    ]
-  };
-  IB.pricing = PRICING;
+  const IB = window.INSTABUILT;
+  if (!IB || !IB.supabase) return;
 
-  var SIZES = ['28 m²', '52 m²', '104 m²', '150 m²', '250 m²', '500 m²'];
+  // ---------- Build the options panel ----------
+  const lineSel = document.getElementById('product_line');
+  const sizeSel = document.getElementById('size');
+  const materialGroup = document.getElementById('materials');
+  const interiorGroup = document.getElementById('interiors');
+  const smartGroup = document.getElementById('smart');
 
-  /* ---------- small helpers ---------- */
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
-
-  function setStatus(form, msg, ok) {
-    var status = form.querySelector('.form-status');
-    status.textContent = msg;
-    status.className = 'form-status ' + (ok ? 'form-status--ok' : 'form-status--err') + ' is-visible';
-  }
-
-  function populateSelect(id, options) {
-    var sel = document.getElementById(id);
-    if (!sel) return;
-    options.forEach(function (label) {
-      var opt = document.createElement('option');
-      opt.value = label;
-      opt.textContent = label;
+  function fillSelect(sel, options) {
+    sel.innerHTML = '';
+    options.forEach(function (o) {
+      const opt = document.createElement('option');
+      opt.value = o;
+      opt.textContent = o;
       sel.appendChild(opt);
     });
   }
 
-  function populateChecks(id, labels) {
-    var group = document.getElementById(id);
-    if (!group) return;
-    labels.forEach(function (label) {
-      var labelEl = document.createElement('label');
-      labelEl.className = 'check-chip';
-      var input = document.createElement('input');
-      input.type = 'checkbox';
-      input.name = id;
-      input.value = label;
-      var span = document.createElement('span');
-      span.textContent = label;
-      labelEl.appendChild(input);
-      labelEl.appendChild(span);
-      group.appendChild(labelEl);
+  function fillChips(group, items, type, isMulti) {
+    group.innerHTML = '';
+    items.forEach(function (item) {
+      const label = document.createElement('label');
+      label.className = 'chip';
+      const input = document.createElement('input');
+      input.type = isMulti ? 'checkbox' : 'radio';
+      input.name = type;
+      input.value = item.id;
+      const swatch = document.createElement('span');
+      swatch.className = 'chip__swatch';
+      if (type === 'material') swatch.style.background = '#' + item.wall.toString(16).padStart(6, '0');
+      const text = document.createElement('span');
+      text.className = 'chip__label';
+      text.textContent = item.label;
+      label.appendChild(input);
+      if (type === 'material') label.appendChild(swatch);
+      label.appendChild(text);
+      group.appendChild(label);
     });
   }
 
-  function checkedValues(id) {
-    var group = document.getElementById(id);
-    if (!group) return [];
-    var out = [];
-    var inputs = group.querySelectorAll('input[type="checkbox"]:checked');
-    for (var i = 0; i < inputs.length; i++) out.push(inputs[i].value);
-    return out;
+  function refreshSizes() {
+    const line = PRODUCT_LINES.find(function (l) { return l.label === lineSel.value; }) || PRODUCT_LINES[0];
+    fillSelect(sizeSel, line.sizes);
   }
 
-  /* ---------- saved designs ---------- */
-  function loadSaved(session) {
-    var list = document.getElementById('saved-designs');
-    if (!list) return;
+  fillSelect(lineSel, PRODUCT_LINES.map(function (l) { return l.label; }));
+  refreshSizes();
+  fillChips(materialGroup, MATERIALS, 'material', false);
+  fillChips(interiorGroup, INTERIOR_PACKAGES, 'interior', false);
+  fillChips(smartGroup, SMART_HOME, 'smart', true);
+
+  // ---------- Read current selection ----------
+  function readSelection() {
+    const material = materialGroup.querySelector('input[name="material"]:checked');
+    const interior = interiorGroup.querySelector('input[name="interior"]:checked');
+    const smartIds = Array.prototype.map.call(
+      smartGroup.querySelectorAll('input[name="smart"]:checked'),
+      function (i) { return i.value; }
+    );
+    return {
+      productLine: lineSel.value,
+      size: sizeSel.value,
+      materialId: material ? material.value : MATERIALS[0].id,
+      interiorId: interior ? interior.value : INTERIOR_PACKAGES[0].id,
+      smartIds: smartIds
+    };
+  }
+
+  // Wait for auth
+  let session = null;
+  try { session = await IB.ready; } catch (e) { /* redirected by guard */ }
+  if (!session) return;
+
+  // ---------- Init 3D ----------
+  const viewer = document.getElementById('viewer');
+  const sceneCtx = createScene(viewer);
+  const house = createHouse();
+  sceneCtx.scene.add(house);
+
+  let selection = readSelection();
+  let config = resolveConfig(selection);
+  render(house, config);
+
+  const centerY = (config.line.storeys * DIMS.wallHeight) / 2;
+
+  function defaultView() {
+    const c = resolveConfig(readSelection());
+    const dist = Math.max(c.width, c.depth) * 1.35 + 6;
+    const h = c.line.storeys * DIMS.wallHeight;
+    return {
+      pos: new THREE.Vector3(dist * 0.9, h * 0.5 + dist * 0.45, dist),
+      target: new THREE.Vector3(0, h * 0.35, 0)
+    };
+  }
+
+  const orbit = createOrbitMode(sceneCtx.scene, sceneCtx.camera, sceneCtx.renderer);
+  const walkthrough = createWalkthroughMode(sceneCtx.camera, sceneCtx.renderer, function () {
+    return interiorBounds(resolveConfig(readSelection()));
+  });
+
+  const dv = defaultView();
+  sceneCtx.camera.position.copy(dv.pos);
+  orbit.setDefaults(dv.pos, dv.target);
+
+  let mode = 'orbit';
+
+  function setMode(next) {
+    mode = next;
+    document.querySelectorAll('[data-mode]').forEach(function (b) {
+      b.classList.toggle('is-active', b.getAttribute('data-mode') === next);
+    });
+    const hint = document.getElementById('walkthrough-hint');
+    if (next === 'walkthrough') {
+      orbit.disable();
+      walkthrough.enable();
+      if (hint) hint.classList.add('is-visible');
+    } else {
+      walkthrough.disable();
+      orbit.enable();
+      const d = defaultView();
+      sceneCtx.camera.position.copy(d.pos);
+      orbit.setTarget(d.target);
+      orbit.update();
+      if (hint) hint.classList.remove('is-visible');
+    }
+  }
+
+  document.querySelectorAll('[data-mode]').forEach(function (b) {
+    b.addEventListener('click', function () { setMode(b.getAttribute('data-mode')); });
+  });
+
+  // Click to look in walkthrough (pointer lock)
+  viewer.addEventListener('click', function () {
+    if (mode === 'walkthrough' && !walkthrough.isLocked()) walkthrough.requestLock();
+  });
+
+  // Reset view
+  document.getElementById('reset-view').addEventListener('click', function () {
+    if (mode === 'walkthrough') walkthrough.enable();
+    else {
+      const d = defaultView();
+      sceneCtx.camera.position.copy(d.pos);
+      orbit.setTarget(d.target);
+      orbit.update();
+    }
+  });
+
+  // ---------- Live updates on selection change ----------
+  function onSelectionChange() {
+    selection = readSelection();
+    config = resolveConfig(selection);
+    render(house, config);
+    const c = config;
+    const cy = (c.line.storeys * DIMS.wallHeight) / 2;
+    if (mode === 'orbit') orbit.setTarget(new THREE.Vector3(0, cy, 0));
+  }
+
+  [lineSel, sizeSel].forEach(function (el) { el.addEventListener('change', onSelectionChange); });
+  [materialGroup, interiorGroup, smartGroup].forEach(function (g) {
+    g.addEventListener('change', onSelectionChange);
+  });
+  lineSel.addEventListener('change', refreshSizes);
+
+  // ---------- Save flow ----------
+  const status = document.querySelector('.designer-panel .form-status');
+  function setStatus(msg, ok) {
+    status.textContent = msg;
+    status.className = 'form-status ' + (ok ? 'form-status--ok' : 'form-status--err') + ' is-visible';
+  }
+
+  document.getElementById('save-design').addEventListener('click', function (e) {
+    const btn = e.currentTarget;
+    const payload = toSavePayload(session.user.id, readSelection());
+    btn.disabled = true;
+    setStatus('Saving…', true);
     IB.supabase.from('house_designs')
-      .select('*')
-      .eq('user_id', session.user.id)
-      .order('created_at', { ascending: false })
-      .limit(5)
+      .insert(payload)
+      .select()
+      .single()
       .then(function (res) {
-        if (res.error) {
-          list.innerHTML = '<p class="muted">Could not load saved designs.</p>';
-          return;
-        }
-        var rows = res.data || [];
-        if (!rows.length) {
-          list.innerHTML = '<p class="muted">No saved designs yet — create your first above.</p>';
-          return;
-        }
-        list.innerHTML = '';
-        rows.forEach(function (d) {
-          var li = document.createElement('li');
-          li.className = 'saved-design';
-          var date = d.created_at ? new Date(d.created_at).toLocaleDateString() : '';
-          li.innerHTML =
-            '<span class="saved-design__meta"><strong>' + esc(d.product_line) + '</strong> · ' + esc(d.size) + '</span>' +
-            '<span class="saved-design__date">' + esc(date) + '</span>' +
-            '<a class="btn btn-sm btn-ghost" href="price-calculator.html?design=' + encodeURIComponent(d.id) + '">Estimate</a>';
-          list.appendChild(li);
-        });
+        if (res.error) { btn.disabled = false; setStatus(res.error.message, false); return; }
+        setStatus('Design saved — opening your estimate…', true);
+        window.location.href = 'price-calculator.html?design=' + encodeURIComponent(res.data.id);
+      })
+      .catch(function (err) {
+        btn.disabled = false;
+        setStatus((err && err.message) || 'Could not save design.', false);
       });
-  }
+  });
 
-  /* ---------- init ---------- */
-  function init(session) {
-    populateSelect('product_line', Object.keys(PRICING.base));
-    populateSelect('size', SIZES);
-    populateChecks('materials', Object.keys(PRICING.materials));
-    populateChecks('interiors', PRICING.interiors.map(function (i) { return i.label; }));
+  // ---------- Start render loop + reveal ----------
+  sceneCtx.start(function (dt) {
+    if (mode === 'orbit') orbit.update();
+    else walkthrough.update(dt);
+  });
 
-    var form = document.getElementById('designer-form');
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      if (!form.checkValidity()) { form.reportValidity(); return; }
-
-      var payload = {
-        user_id: session.user.id,
-        product_line: document.getElementById('product_line').value,
-        size: document.getElementById('size').value,
-        materials: checkedValues('materials'),
-        interior_selections: checkedValues('interiors')
-      };
-
-      var btn = form.querySelector('button[type="submit"]');
-      btn.disabled = true;
-      setStatus(form, 'Saving…', true);
-
-      IB.supabase.from('house_designs')
-        .insert(payload)
-        .select()
-        .single()
-        .then(function (res) {
-          if (res.error) {
-            btn.disabled = false;
-            setStatus(form, res.error.message, false);
-            return;
-          }
-          setStatus(form, 'Design saved — opening your estimate…', true);
-          window.location.href = 'price-calculator.html?design=' + encodeURIComponent(res.data.id);
-        })
-        .catch(function (err) {
-          btn.disabled = false;
-          setStatus(form, (err && err.message) || 'Could not save design.', false);
-        });
-    });
-
-    loadSaved(session);
-  }
-
-  IB.ready.then(init);
+  const loading = document.getElementById('viewer-loading');
+  if (loading) loading.classList.add('is-hidden');
+  document.documentElement.classList.add('designer-3d-ready');
+  window.INSTABUILT._designer3dReady = true;
 })();
