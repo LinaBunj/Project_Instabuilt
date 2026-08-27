@@ -128,7 +128,56 @@
     revealEls.forEach(function (el) { el.classList.add('is-visible'); });
   }
 
-  /* ---------- Form capture (no backend in Phase 1) ---------- */
+  /* ---------- Form capture (newsletter → Supabase, contact → capture) ---------- */
+  function formStatus(form) {
+    return (
+      form.querySelector('.form-status') ||
+      (form.nextElementSibling && form.nextElementSibling.classList && form.nextElementSibling.classList.contains('form-status')
+        ? form.nextElementSibling
+        : form.parentElement && form.parentElement.querySelector('.form-status'))
+    );
+  }
+
+  function sayStatus(form, msg, ok) {
+    var status = formStatus(form);
+    if (!status) return;
+    status.textContent = msg;
+    status.className = 'form-status ' + (ok ? 'form-status--ok' : 'form-status--err') + ' is-visible';
+  }
+
+  // Newsletter forms save the email to Supabase (public newsletter_signups).
+  // Duplicates are a success; without a Supabase client the email is kept
+  // locally so it is never lost silently.
+  function saveNewsletter(form, email, successMsg) {
+    var sb = window.INSTABUILT && window.INSTABUILT.supabase;
+    var done = function (ok, msg) {
+      sayStatus(form, msg, ok);
+      if (ok) form.reset();
+    };
+    if (!sb) {
+      try {
+        var list = JSON.parse(localStorage.getItem('instabuilt.newsletter') || '[]');
+        if (list.indexOf(email) === -1) list.push(email);
+        localStorage.setItem('instabuilt.newsletter', JSON.stringify(list));
+      } catch (e) { /* non-fatal */ }
+      console.log('[InstaBuilt] newsletter saved locally (no Supabase client):', email);
+      done(true, successMsg);
+      return;
+    }
+    sb.from('newsletter_signups')
+      .insert({ email: email })
+      .then(function (res) {
+        if (res.error) {
+          // Unique index on lower(email): re-subscribing is already-subscribed.
+          if (res.error.code === '23505' || res.status === 409) { done(true, successMsg); return; }
+          console.error('[InstaBuilt] newsletter insert failed:', res.error);
+          done(false, 'Sorry — we could not save your subscription right now. Please try again.');
+          return;
+        }
+        done(true, successMsg);
+      });
+  }
+
   document.querySelectorAll('form[data-capture]').forEach(function (form) {
     form.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -136,14 +185,19 @@
       var data = new FormData(form);
       var payload = {};
       data.forEach(function (v, k) { payload[k] = String(v); });
-      // Capture-only for now: the payload is logged; backend wiring arrives in Phase 2.
-      if (window.console) console.log('[InstaBuilt] form captured:', payload);
-      var status = form.querySelector('.form-status');
-      if (status) {
-        status.textContent = form.getAttribute('data-success') ||
-          'Thank you — your details have been captured. We will be in touch shortly.';
-        status.className = 'form-status form-status--ok is-visible';
+      var successMsg = form.getAttribute('data-success') || 'Thank you for subscribing!';
+
+      // Newsletter forms (public email capture) → save to Supabase.
+      if (form.classList.contains('newsletter')) {
+        var email = (payload.email || '').trim();
+        if (!email) return;
+        saveNewsletter(form, email, successMsg);
+        return;
       }
+
+      // Other capture forms (e.g. the contact form) stay capture-only.
+      if (window.console) console.log('[InstaBuilt] form captured:', payload);
+      sayStatus(form, successMsg, true);
       form.reset();
     });
   });

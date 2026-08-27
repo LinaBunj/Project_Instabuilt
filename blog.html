@@ -142,7 +142,7 @@
           <span class="eyebrow eyebrow--on-dark">Never miss a post</span>
           <h2 style="font-family:var(--font-serif);font-size:clamp(1.9rem,3.6vw,3rem);margin:1rem 0 0.9rem;color:var(--on-dark);">Subscribe to the blog.</h2>
           <p style="color:var(--on-dark-muted);max-width:40rem;">Get new articles in your inbox the moment they're published.</p>
-          <form class="newsletter newsletter--dark mt-3" data-capture data-success="Thank you — you are subscribed.">
+          <form class="newsletter newsletter--dark mt-3" data-capture data-success="Thank you for subscribing!">
             <label class="hide" for="blog-email">Email address</label>
             <input type="email" name="email" id="blog-email" placeholder="you@example.com" required autocomplete="email">
             <button class="btn btn-primary" type="submit">Subscribe</button>
@@ -198,7 +198,7 @@
         <div class="footer-col">
           <h4>Stay informed</h4>
           <p>Occasional updates on projects, innovation and events.</p>
-          <form class="newsletter newsletter--dark" data-capture data-success="Thank you — you are subscribed.">
+          <form class="newsletter newsletter--dark" data-capture data-success="Thank you for subscribing!">
             <label class="hide" for="footer-email">Email address</label>
             <input type="email" name="email" id="footer-email" placeholder="you@example.com" required autocomplete="email">
             <button class="btn btn-primary" type="submit">Subscribe</button>
@@ -218,7 +218,9 @@
     </div>
   </footer>
 
-  <script src="js/main.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+<script src="js/main.js"></script>
   <script src="js/ai-agent.js"></script>
 </body>
 </html>
