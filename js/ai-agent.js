@@ -3,8 +3,8 @@
  *
  * Self-contained vanilla-JS chat widget, bottom-right on every page. Talks to a
  * Vercel serverless function at /api/agent (see api/agent.js), which calls the
- * Anthropic API. The API key lives ONLY in the Vercel env var ANTHROPIC_API_KEY
- * and is never shipped to the browser.
+ * Groq API (OpenAI-compatible). The API key lives ONLY in the env var
+ * GROQ_API_KEY and is never shipped to the browser.
  *
  * The widget also executes the agent's tool calls locally:
  *   - set_house_option()     → stores choices + updates the saved house design
