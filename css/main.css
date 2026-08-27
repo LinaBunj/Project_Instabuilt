@@ -159,8 +159,6 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 500; line-height
 .site-header {
   position: sticky; top: 0; z-index: 100;
   background: var(--bg);
-  backdrop-filter: saturate(1.1) blur(12px);
-  -webkit-backdrop-filter: saturate(1.1) blur(12px);
   border-bottom: 1px solid var(--line);
   transition: border-color var(--dur) var(--ease),
     background var(--dur) var(--ease),
@@ -193,7 +191,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 500; line-height
 /* Soft white glass when scrolled on home, or on every subpage scroll */
 .site-header.scrolled,
 .site-header:not(.site-header--transparent) {
-  background: rgba(255, 255, 255, 0.82);
+  background: var(--bg);
   border-bottom-color: var(--line);
   box-shadow: var(--shadow-sm);
 }
@@ -226,7 +224,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 500; line-height
 .nav-list { display: flex; align-items: center; gap: 0.15rem; }
 .nav-link {
   display: inline-flex; align-items: center; gap: 0.3rem;
-  padding: 0.5rem 0.7rem; font-size: 0.9rem; font-weight: 500; color: var(--ink-soft);
+  padding: 0.5rem 0.7rem; font-size: 1rem; font-weight: 500; color: var(--ink-soft);
   text-decoration: none; border-radius: var(--radius-sm); position: relative;
   transition: color var(--dur) var(--ease), background var(--dur) var(--ease);
 }
@@ -261,7 +259,7 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 500; line-height
 
 .header-actions { display: flex; align-items: center; gap: 0.8rem; }
 .header-signin {
-  font-weight: 500; font-size: 0.9rem; color: var(--ink-soft);
+  font-weight: 500; font-size: 1rem; color: var(--ink-soft);
   text-decoration: none; padding: 0.5rem 0.35rem; white-space: nowrap;
   transition: color var(--dur) var(--ease);
 }
@@ -597,6 +595,13 @@ a.media:hover img, .card:hover .media img { transform: scale(1.035); }
   body.nav-open { overflow: hidden; }
   .nav-list { flex-direction: column; align-items: stretch; gap: 0.2rem; }
   .nav-link { width: 100%; justify-content: space-between; padding: 0.85rem 0.4rem; font-size: 1rem; border-radius: var(--radius-sm); }
+  /* Keep nav text dark inside the white mobile panel even while the header
+     is transparent over the hero photo. */
+  .site-header--transparent .site-nav .nav-link,
+  .site-header--transparent .site-nav .nav-link .chev { color: var(--ink-soft); }
+  .site-header--transparent .site-nav .nav-link[aria-current="page"] { color: var(--clay-deep); }
+  .site-header--transparent .site-nav .nav-link:hover,
+  .site-header--transparent .site-nav .nav-link:focus-visible { color: var(--ink); background: var(--bg-alt); }
   .has-dropdown { width: 100%; }
   .dropdown {
     position: static; opacity: 1; visibility: visible; transform: none;
