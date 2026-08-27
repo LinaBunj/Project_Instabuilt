@@ -79,6 +79,22 @@ python -m http.server 8124
 # open http://localhost:8124
 ```
 
+## AI assistant (floating chat widget)
+
+The widget (`js/ai-agent.js`) is loaded on every page and calls the serverless
+function `api/agent.js`, which answers with the **Groq** API (OpenAI-compatible).
+The API key lives only in `GROQ_API_KEY` — never in client-side code.
+
+- **Local dev:** copy `.env.example` → `.env`, paste your key, then
+  `npx vercel dev` (reads `.env` automatically).
+- **Vercel:** Project Settings → Environment Variables → `GROQ_API_KEY`
+  (and optionally `GROQ_MODEL`, default `openai/gpt-oss-120b`).
+
+The widget and the function speak Anthropic-shaped messages; `api/agent.js`
+translates them to Groq's chat-completions format, so tool calls
+(`set_house_option`, `navigate_to_page`, `get_current_estimate`) are executed
+client-side exactly as before.
+
 ## Link audit (zero 404s)
 
 ```bash
