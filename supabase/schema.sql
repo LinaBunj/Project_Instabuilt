@@ -137,3 +137,32 @@ create policy "contact_submissions_select_own" on public.contact_submissions
 --   * For production, consider adding rate-limiting / CAPTCHA on the public
 --     insert policies (newsletter_signups, contact_submissions).
 -- ---------------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------------
+-- Energy calculator estimates (Phase 2).
+-- ---------------------------------------------------------------------------
+create table if not exists public.energy_estimates (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  house_design_id uuid references public.house_designs (id) on delete set null,
+  inputs jsonb not null default '{}'::jsonb,
+  estimated_kwh numeric(12, 1),
+  estimated_cost numeric(12, 2),
+  created_at timestamptz not null default now()
+);
+create index if not exists energy_estimates_user_id_idx
+  on public.energy_estimates (user_id, created_at desc);
+
+alter table public.energy_estimates enable row level security;
+
+drop policy if exists "energy_estimates_select_own" on public.energy_estimates;
+create policy "energy_estimates_select_own" on public.energy_estimates
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "energy_estimates_insert_own" on public.energy_estimates;
+create policy "energy_estimates_insert_own" on public.energy_estimates
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "energy_estimates_delete_own" on public.energy_estimates;
+create policy "energy_estimates_delete_own" on public.energy_estimates
+  for delete using (auth.uid() = user_id);
