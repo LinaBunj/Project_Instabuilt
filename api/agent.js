@@ -109,23 +109,48 @@ module.exports = async function handler(req, res) {
     return;
   }
 
+  // ------------------------------------------------------------------
+  // 1) Config check — the API key MUST be present and non-empty.
+  //    Log clearly so a missing env var is obvious in Vercel logs.
+  // ------------------------------------------------------------------
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    res.status(503).json({ error: 'The AI assistant is not configured yet.' });
+  if (!apiKey || !apiKey.trim()) {
+    console.error('[agent] ANTHROPIC_API_KEY is not set');
+    res.status(503).json({ error: 'ANTHROPIC_API_KEY is not set' });
     return;
   }
 
+  // ------------------------------------------------------------------
+  // 2) Parse + validate the request body. Log any malformed body.
+  // ------------------------------------------------------------------
   let body = req.body;
   if (typeof body === 'string') {
-    try { body = JSON.parse(body); } catch (e) { body = null; }
+    try { body = JSON.parse(body); } catch (e) {
+      console.error('[agent] Invalid JSON body:', e && e.message);
+      res.status(400).json({ error: 'Invalid JSON body: ' + (e && e.message) });
+      return;
+    }
   }
   const rawMessages = body && Array.isArray(body.messages) ? body.messages : [];
   if (!rawMessages.length) {
+    console.error('[agent] No messages provided in request body');
     res.status(400).json({ error: 'No messages provided.' });
     return;
   }
 
   const messages = trimMessages(rawMessages, 40);
+
+  // ------------------------------------------------------------------
+  // 3) Call Anthropic — wrapped in its own try/catch; log the FULL error.
+  //    Model is configurable via ANTHROPIC_MODEL (e.g. claude-sonnet-4-5-20250929).
+  // ------------------------------------------------------------------
+  const payload = {
+    model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+    max_tokens: 1024,
+    system: SYSTEM_PROMPT,
+    tools: TOOLS,
+    messages
+  };
 
   let upstream;
   try {
@@ -136,27 +161,32 @@ module.exports = async function handler(req, res) {
         'x-api-key': apiKey,
         'anthropic-version': '2023-06-01'
       },
-      body: JSON.stringify({
-        // Override via ANTHROPIC_MODEL if needed (e.g. claude-sonnet-4-5-20250929).
-        model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
-        max_tokens: 1024,
-        system: SYSTEM_PROMPT,
-        tools: TOOLS,
-        messages
-      })
+      body: JSON.stringify(payload)
     });
-  } catch (e) {
-    res.status(502).json({ error: 'Could not reach the AI service.' });
+  } catch (err) {
+    console.error('[agent] Network error calling Anthropic:', err);
+    res.status(502).json({ error: 'Could not reach the Anthropic API: ' + (err && err.message) });
     return;
   }
 
+  // Log status + body so auth / model / request-shape errors are visible.
   if (!upstream.ok) {
-    console.error('[agent] Anthropic error', upstream.status, await upstream.text().catch(() => ''));
-    res.status(502).json({ error: 'The assistant is temporarily unavailable. Please try again shortly.' });
+    const rawBody = await upstream.text().catch(() => '');
+    console.error('[agent] Anthropic returned non-2xx:', upstream.status, rawBody);
+    // DEBUG: return the real error message so it's visible in the browser
+    // Network tab / console. Remove the detailed message before final deploy.
+    res.status(502).json({ error: 'Anthropic API error ' + upstream.status + ': ' + rawBody });
     return;
   }
 
-  const data = await upstream.json();
+  let data;
+  try {
+    data = await upstream.json();
+  } catch (err) {
+    console.error('[agent] Anthropic returned non-JSON body:', err && err.message);
+    res.status(502).json({ error: 'Anthropic API returned an invalid response.' });
+    return;
+  }
 
   const toolCalls = [];
   let text = '';

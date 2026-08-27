@@ -293,6 +293,9 @@
       if (guard >= 8) throw new Error('The assistant got stuck in a loop.');
     } catch (err) {
       hideTyping();
+      // DEBUG: log the real server error so the cause is visible in the
+      // browser console / Network tab. Remove before final deploy if noisy.
+      console.error('[ai-agent] agent request failed:', err);
       appendMessage('assistant', FALLBACK);
     } finally {
       busy = false;
