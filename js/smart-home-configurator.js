@@ -99,6 +99,7 @@ import { ROOMS, CATEGORIES, FEATURES, FEATURE_BY_ID, CONTROL_ICON } from './smar
       d.group.setAttribute('opacity', n > 0 ? '1' : '0');
       d.text.textContent = n;
     });
+    document.getElementById('feature-count').textContent = selected.size + (selected.size === 1 ? ' feature' : ' features');
   }
 
   function renderPopover(roomId) {

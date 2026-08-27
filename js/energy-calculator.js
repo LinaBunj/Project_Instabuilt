@@ -15,6 +15,7 @@
  *   cost = kWh × euroPerKwh
  */
 import { parseArea } from './models-config.js';
+import { FEATURE_BY_ID } from './smart-home-config.js';
 
 (async function () {
   'use strict';
@@ -101,6 +102,16 @@ import { parseArea } from './models-config.js';
     return ENERGY_CONFIG.occupancy.base + ENERGY_CONFIG.occupancy.perOccupant * (occupants - 1);
   }
 
+  // Efficiency multiplier from smart-home heating/cooling + climate sensors.
+  function computeSmartMult() {
+    let mult = 1.0;
+    smartHomeIds.forEach(function (id) {
+      const f = FEATURE_BY_ID[id];
+      if (f && f.energyMult < 1) mult *= f.energyMult;
+    });
+    smartMult = mult;
+  }
+
   // ---------- Compute ----------
   function money(n) {
     return '€' + Math.round(n).toLocaleString('en-US');
@@ -112,7 +123,7 @@ import { parseArea } from './models-config.js';
     const win = ENERGY_CONFIG.windowMultipliers[sel.window];
     const occ = occupancyFactor(sel.occupancy);
     const eff = ENERGY_CONFIG.systems[sel.system].efficiency;
-    const kwh = base * area * win * occ * eff;
+    const kwh = base * area * win * occ * eff * smartMult;
     const cost = kwh * ENERGY_CONFIG.euroPerKwh;
     return { kwh: kwh, cost: cost, area: area };
   }
@@ -125,7 +136,7 @@ import { parseArea } from './models-config.js';
       const win = ENERGY_CONFIG.windowMultipliers[sel.window];
       const occ = occupancyFactor(sel.occupancy);
       const eff = ENERGY_CONFIG.systems[sys].efficiency;
-      const kwh = base * area * win * occ * eff;
+      const kwh = base * area * win * occ * eff * smartMult;
       return { id: sys, short: ENERGY_CONFIG.systems[sys].short, kwh: kwh, cost: kwh * ENERGY_CONFIG.euroPerKwh };
     });
   }
@@ -225,6 +236,8 @@ import { parseArea } from './models-config.js';
 
   // ---------- Debounced save ----------
   let designId = null;
+  let smartHomeIds = [];
+  let smartMult = 1.0;
   let saveTimer = null;
   let statusTimer = null;
 
@@ -296,6 +309,15 @@ import { parseArea } from './models-config.js';
       designId = res.data.id;
       if (SIZES.indexOf(res.data.size) !== -1) sizeSel.value = res.data.size;
     }
+
+    const smart = await IB.supabase.from('smart_home_selections')
+      .select('features')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (smart.data && Array.isArray(smart.data.features)) smartHomeIds = smart.data.features;
+    computeSmartMult();
   }
 
   await loadDesign();

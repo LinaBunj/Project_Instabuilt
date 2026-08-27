@@ -160,6 +160,72 @@ html.authed .auth-loader { display: none; }
 .energy-caption { font-size: 0.85rem; color: var(--ink-soft); margin: 0.4rem 0 0.1rem; }
 .calc input[type="range"] { width: 100%; accent-color: var(--clay); }
 
+/* ---------- Smart-home configurator ---------- */
+.smart__toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: 0.6rem 0 1.4rem; }
+.smart__count { font-size: 0.85rem; color: var(--muted); }
+
+.smart__diagram-wrap { position: relative; max-width: 560px; }
+#floorplan { width: 100%; height: auto; display: block; }
+.smart-room { cursor: pointer; transition: stroke var(--dur) var(--ease); }
+.smart-room:hover { stroke: var(--clay); }
+.smart-room-label { pointer-events: none; }
+
+.smart__popover {
+  position: absolute; z-index: 10; width: 252px; max-height: 430px; overflow: auto;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow-md); padding: 0.9rem;
+}
+.smart__popover-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.6rem; }
+.smart__popover-close { font-size: 1.25rem; line-height: 1; color: var(--muted); }
+.smart__popover-close:hover { color: var(--ink); }
+
+.smart-popover-cat { margin-bottom: 0.8rem; }
+.smart-popover-cat:last-child { margin-bottom: 0; }
+.smart-popover-cat__title { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 0.3rem; }
+.smart-feature { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0; cursor: pointer; }
+.smart-feature input { accent-color: var(--clay); flex: 0 0 auto; }
+.smart-feature__name { flex: 1; font-size: 0.88rem; color: var(--ink-soft); }
+.smart-feature__price { font-size: 0.78rem; color: var(--clay-deep); font-variant-numeric: tabular-nums; }
+
+.smart__hint { font-size: 0.82rem; color: var(--muted); margin-top: 0.9rem; }
+
+/* Control panel (mock smart-home app) */
+.smart__panel {
+  background: linear-gradient(180deg, #121417, #1b1e23);
+  border: 1px solid #2a2e34; border-radius: var(--radius-lg);
+  padding: clamp(1.2rem, 2.5vw, 1.8rem); color: #e8eaec;
+}
+.smart-cat { margin-bottom: 1.6rem; }
+.smart-cat:last-child { margin-bottom: 0; }
+.smart-cat__title { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: #8a9097; font-weight: 700; margin-bottom: 0.7rem; }
+.smart-cat__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.8rem; }
+.smart-device { background: #23272d; border: 1px solid #2f343b; border-radius: var(--radius); padding: 0.85rem; }
+.smart-device__head { display: flex; align-items: center; gap: 0.6rem; }
+.smart-device__icon { font-size: 1.2rem; }
+.smart-device__name { flex: 1; font-size: 0.9rem; font-weight: 500; }
+.smart-device__switch {
+  width: 34px; height: 20px; border-radius: 999px; background: #3a4047; position: relative;
+  transition: background var(--dur) var(--ease); flex: 0 0 auto;
+}
+.smart-device__switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform var(--dur) var(--ease); }
+.smart-device__switch.is-on { background: var(--clay); }
+.smart-device__switch.is-on::after { transform: translateX(14px); }
+.smart-device__body { margin-top: 0.7rem; }
+.smart-range { width: 100%; accent-color: var(--clay); }
+.smart-dial-wrap { display: flex; justify-content: center; }
+.smart-dial { width: 84px; height: 84px; }
+.smart-feed { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; color: #aeb4ba; }
+.smart-feed__dot { width: 8px; height: 8px; border-radius: 50%; background: #d0453a; }
+.smart-status, .smart-readout { font-size: 0.8rem; color: #aeb4ba; }
+.smart-readout { font-size: 0.9rem; font-weight: 600; color: #e8eaec; }
+.smart-empty { text-align: center; padding: 3rem 1rem; color: #8a9097; }
+.smart-empty__icon { font-size: 2.4rem; margin-bottom: 0.6rem; }
+.smart-empty__sub { font-size: 0.85rem; margin-top: 0.4rem; }
+
+@media (max-width: 860px) {
+  .smart__toolbar { flex-direction: column; align-items: flex-start; }
+}
+
 .breakdown { width: 100%; border-collapse: collapse; }
 .breakdown th, .breakdown td { padding: 0.7rem 0.4rem; text-align: left; border-top: 1px solid var(--line); font-size: 0.94rem; }
 .breakdown th { font-weight: 500; color: var(--ink-soft); }

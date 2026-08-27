@@ -12,6 +12,7 @@
  * To swap in real InstaBuilt pricing, edit PRICING_CONFIG below — nothing else.
  */
 import { PRODUCT_LINES, MATERIALS, INTERIOR_PACKAGES, SMART_HOME, parseArea } from './models-config.js';
+import { FEATURES, FEATURE_BY_ID } from './smart-home-config.js';
 
 (async function () {
   'use strict';
@@ -55,7 +56,9 @@ import { PRODUCT_LINES, MATERIALS, INTERIOR_PACKAGES, SMART_HOME, parseArea } fr
       'Smart-home package': 8000,
       'Solar roof': 6000,
       'Battery storage': 4000
-    }
+    },
+    // Granular smart-home devices (EUR), sourced from js/smart-home-config.js.
+    smartHomeFeatures: FEATURES.reduce(function (m, f) { m[f.id] = f.price; return m; }, {})
   };
 
   // ---------- UI ----------
@@ -148,7 +151,7 @@ import { PRODUCT_LINES, MATERIALS, INTERIOR_PACKAGES, SMART_HOME, parseArea } fr
     const materialAdj = base * (mult - 1);
     const interiorCost = PRICING_CONFIG.interiorPackages[interior.label] || 0;
     const addonCost = addons.reduce(function (sum, a) { return sum + (PRICING_CONFIG.addons[a.label] || 0); }, 0);
-    const total = base + materialAdj + interiorCost + addonCost;
+    let total = base + materialAdj + interiorCost + addonCost;
 
     const lines = [];
     lines.push({ label: 'Base build — ' + line.label + ' · ' + sel.size + ' (' + area + ' m² @ ' + money(baseRate) + '/m²)', amount: base });
@@ -157,6 +160,16 @@ import { PRODUCT_LINES, MATERIALS, INTERIOR_PACKAGES, SMART_HOME, parseArea } fr
     addons.forEach(function (a) {
       const c = PRICING_CONFIG.addons[a.label] || 0;
       if (c > 0) lines.push({ label: 'Add-on — ' + a.label, amount: c });
+    });
+
+    // Smart-home devices selected in the Smart-Home Configurator.
+    smartHomeIds.forEach(function (id) {
+      const price = PRICING_CONFIG.smartHomeFeatures[id];
+      if (price) {
+        const f = FEATURE_BY_ID[id];
+        lines.push({ label: 'Smart-home — ' + (f ? f.label : id), amount: price });
+        total += price;
+      }
     });
 
     return { lines: lines, total: total, area: area, currency: 'EUR' };
@@ -181,6 +194,7 @@ import { PRODUCT_LINES, MATERIALS, INTERIOR_PACKAGES, SMART_HOME, parseArea } fr
 
   // ---------- Debounced save to price_estimates ----------
   let designId = null;
+  let smartHomeIds = [];
   let saveTimer = null;
   let statusTimer = null;
   const SAVE_DEBOUNCE_MS = 500;
@@ -299,6 +313,17 @@ import { PRODUCT_LINES, MATERIALS, INTERIOR_PACKAGES, SMART_HOME, parseArea } fr
     if (!created.error && created.data) designId = created.data.id;
   }
 
+  async function loadSmartHome() {
+    const res = await IB.supabase.from('smart_home_selections')
+      .select('features')
+      .eq('user_id', session.user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (res.data && Array.isArray(res.data.features)) smartHomeIds = res.data.features;
+  }
+
   await loadDesign();
+  await loadSmartHome();
   render(compute(readSelection()));
 })();
