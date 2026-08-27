@@ -348,3 +348,167 @@ html:not(.webgl) #designer-fallback { display: block; }
 @media (max-width: 860px) {
   .calc-grid { grid-template-columns: 1fr; }
 }
+
+/* ---------- Project tracking ---------- */
+.track-empty { text-align: center; padding: 2.6rem 2rem; }
+.track-empty p { color: var(--muted); margin: 0.5rem 0 1.6rem; }
+.track-empty .btn { justify-content: center; }
+
+.track-progress-card { margin-bottom: 1.5rem; }
+.track-stage-line { font-weight: 600; color: var(--clay-deep); margin: 0 0 1.6rem; }
+.track-demo-note { font-size: 0.8rem; color: var(--muted); margin: 1.4rem 0 0; }
+
+.track-progress {
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  margin: 0;
+  padding: 0.25rem 0 0;
+}
+.track-step {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+}
+.track-step__connector {
+  position: absolute;
+  top: 15px;
+  left: -50%;
+  right: 50%;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line);
+}
+.track-step__connector.is-filled { background: var(--clay); }
+
+.track-step__node {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 0.92rem;
+  line-height: 1;
+}
+.track-step__label {
+  margin-top: 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.25;
+}
+.track-step.is-done .track-step__node { background: var(--clay); border-color: var(--clay); color: #fff; }
+.track-step.is-done .track-step__label { color: var(--ink); font-weight: 600; }
+.track-step.is-current .track-step__node {
+  background: var(--clay);
+  border-color: var(--clay);
+  color: #fff;
+  animation: track-pulse 1.7s ease-in-out infinite;
+}
+.track-step.is-current .track-step__label { color: var(--ink); font-weight: 700; }
+
+@keyframes track-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(107, 124, 63, 0.4); }
+  70%  { box-shadow: 0 0 0 12px rgba(107, 124, 63, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(107, 124, 63, 0); }
+}
+
+/* Timeline */
+.track-timeline { list-style: none; margin: 0; padding: 0; }
+.track-card { display: flex; gap: 1rem; }
+.track-card__rail {
+  position: relative;
+  width: 34px;
+  flex: 0 0 34px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.track-card__rail::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: -1rem;
+  left: 50%;
+  width: 2px;
+  transform: translateX(-50%);
+  background: var(--line);
+}
+.track-card:last-child .track-card__rail::before { display: none; }
+.track-card__dot {
+  position: relative;
+  z-index: 1;
+  width: 15px;
+  height: 15px;
+  margin-top: 7px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  background: var(--surface);
+}
+.track-card.is-done .track-card__rail::before { background: var(--clay); }
+.track-card.is-done .track-card__dot { background: var(--clay); border-color: var(--clay); }
+.track-card.is-current .track-card__dot {
+  background: var(--clay);
+  border-color: var(--clay);
+  box-shadow: 0 0 0 4px var(--clay-soft);
+}
+.track-card__body {
+  flex: 1;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.3rem;
+  margin-bottom: 1rem;
+}
+.track-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.track-card__head h3 { font-family: var(--font-serif); font-size: 1.1rem; margin: 0; }
+.track-card__status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  background: var(--bg-alt);
+  color: var(--muted);
+}
+.track-card.is-done .track-card__status { background: var(--clay-soft); color: var(--clay-deep); }
+.track-card.is-current .track-card__status { background: var(--clay); color: #fff; }
+.track-card__body p { margin: 0.5rem 0 0; color: var(--muted); }
+.track-card.is-upcoming .track-card__body { opacity: 0.62; }
+
+/* Future media slot (image/video) — empty by default, un-hides once populated. */
+.track-media { display: none; }
+.track-media:not(:empty) {
+  display: block;
+  margin-top: 1rem;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-alt);
+}
+.track-media img, .track-media video { display: block; width: 100%; height: auto; }
+
+@media (max-width: 560px) {
+  .track-step__label { font-size: 0.68rem; }
+  .track-step__node { width: 28px; height: 28px; font-size: 0.8rem; }
+  .track-step__connector { top: 13px; }
+}

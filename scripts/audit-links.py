@@ -20,7 +20,7 @@ PAGES = [
     "dashboard/index.html", "dashboard/house-designer.html",
     "dashboard/price-calculator.html", "dashboard/energy-calculator.html",
     "dashboard/smart-home-configurator.html", "dashboard/profile.html",
-    "dashboard/coming-soon.html",
+    "dashboard/coming-soon.html", "dashboard/project-tracking.html",
 ]
 
 

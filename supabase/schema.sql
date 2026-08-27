@@ -193,3 +193,36 @@ create policy "smart_home_selections_insert_own" on public.smart_home_selections
 drop policy if exists "smart_home_selections_delete_own" on public.smart_home_selections;
 create policy "smart_home_selections_delete_own" on public.smart_home_selections
   for delete using (auth.uid() = user_id);
+
+-- ---------------------------------------------------------------------------
+-- Project tracking (Phase 2). One row per user's active build.
+-- current_stage is 1–6; stage_started_at drives the demo auto-advance.
+-- ---------------------------------------------------------------------------
+create table if not exists public.project_tracking (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  house_design_id uuid references public.house_designs (id) on delete set null,
+  current_stage smallint not null default 1 check (current_stage between 1 and 6),
+  stage_started_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+create index if not exists project_tracking_user_id_idx
+  on public.project_tracking (user_id, created_at desc);
+
+alter table public.project_tracking enable row level security;
+
+drop policy if exists "project_tracking_select_own" on public.project_tracking;
+create policy "project_tracking_select_own" on public.project_tracking
+  for select using (auth.uid() = user_id);
+
+drop policy if exists "project_tracking_insert_own" on public.project_tracking;
+create policy "project_tracking_insert_own" on public.project_tracking
+  for insert with check (auth.uid() = user_id);
+
+drop policy if exists "project_tracking_update_own" on public.project_tracking;
+create policy "project_tracking_update_own" on public.project_tracking
+  for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "project_tracking_delete_own" on public.project_tracking;
+create policy "project_tracking_delete_own" on public.project_tracking
+  for delete using (auth.uid() = user_id);
