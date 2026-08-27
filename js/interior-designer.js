@@ -142,7 +142,7 @@ function floorLamp() {
   g.add(at(cyl(0.025, 0.025, 1.5, m), 0, 0.77, 0));
   g.add(at(cyl(0.22, 0.12, 0.34, std(0xd8d4c8, { roughness: 0.9 })), 0, 1.62, 0));
   g.add(at(new THREE.Mesh(new THREE.SphereGeometry(0.08, 12, 12), std(0xfff2c0, { emissive: 0xffe27a, emissiveIntensity: 1.4 })), 0, 1.45, 0));
-  const light = new THREE.PointLight(0xffe2b0, 1.6, 9, 2);
+  const light = new THREE.PointLight(0xffe2b0, 3.2, 10, 1);
   light.position.set(0, 1.42, 0);
   light.castShadow = false;
   g.add(light);
@@ -153,7 +153,7 @@ function tableLamp() {
   const g = group('table-lamp', 0.14, 0.14);
   g.add(at(cyl(0.1, 0.1, 0.03, std(metal, { roughness: 0.4, metalness: 0.7 })), 0, 0.015, 0));
   g.add(at(cyl(0.14, 0.08, 0.22, std(0xd8d4c8, { roughness: 0.9 })), 0, 0.2, 0));
-  const light = new THREE.PointLight(0xffe2b0, 1.2, 6, 2);
+  const light = new THREE.PointLight(0xffe2b0, 2.2, 6, 1);
   light.position.set(0, 0.35, 0);
   light.castShadow = false;
   g.add(light);

@@ -141,17 +141,12 @@ export function render(house, config) {
   ifloor.castShadow = false;
   house.add(ifloor);
 
-  // Interior accents per package
-  if (interior.accent === 'kitchen' || interior.accent === 'kitchen+bath') {
-    const counter = box(2.2, 0.9, 0.65, mat(0xe8e4dc, { roughness: 0.8 }));
-    counter.position.set(-width / 2 + 1.4, DIMS.slabThickness + 0.45, -depth / 2 + 0.6);
-    house.add(counter);
-  }
-  if (interior.accent === 'kitchen+bath') {
-    const bath = box(1.0, 0.5, 1.6, mat(0xdfe3e8, { roughness: 0.5 }));
-    bath.position.set(width / 2 - 1.0, DIMS.slabThickness + 0.25, depth / 2 - 1.1);
-    house.add(bath);
-  }
+  // Interior accents per package (3D furniture is placed via the interior
+  // designer; the package here only drives the floor finish colour).
+  const ceilingLight = new THREE.PointLight(0xffe8c0, 3.2, 24, 1);
+  ceilingLight.position.set(0, wallH - 0.4, 0);
+  ceilingLight.castShadow = false;
+  house.add(ceilingLight);
 
   // Smart-home visuals
   smart.forEach(function (s) {
