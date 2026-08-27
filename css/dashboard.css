@@ -152,6 +152,14 @@ html.authed .auth-loader { display: none; }
 .calc__save.is-visible { opacity: 1; }
 .calc__save.is-error { color: #b0432c; }
 
+.energy-headline { display: grid; gap: 0.15rem; margin-bottom: 1.1rem; }
+.energy-headline__cost { font-family: var(--font-serif); font-size: 2.4rem; font-weight: 600; color: var(--clay); letter-spacing: -0.01em; }
+.energy-headline__kwh { font-size: 0.95rem; color: var(--muted); }
+.energy-chart-wrap { margin: 0.3rem 0 0.3rem; }
+.energy-chart-wrap canvas { display: block; width: 100%; }
+.energy-caption { font-size: 0.85rem; color: var(--ink-soft); margin: 0.4rem 0 0.1rem; }
+.calc input[type="range"] { width: 100%; accent-color: var(--clay); }
+
 .breakdown { width: 100%; border-collapse: collapse; }
 .breakdown th, .breakdown td { padding: 0.7rem 0.4rem; text-align: left; border-top: 1px solid var(--line); font-size: 0.94rem; }
 .breakdown th { font-weight: 500; color: var(--ink-soft); }
