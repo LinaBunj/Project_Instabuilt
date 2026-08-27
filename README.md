@@ -75,9 +75,14 @@ their own rows in `house_designs` and `price_estimates`.
 ## Run locally
 
 ```bash
-python -m http.server 8124
+node server.js
 # open http://localhost:8124
 ```
+
+`server.js` serves the static site **and** the `/api/agent` endpoint (the same
+handler as on Vercel), so the AI chatbot works locally too. It reads
+`GROQ_API_KEY` from `.env`. (Plain `python -m http.server` can still serve the
+static pages, but `/api/agent` will not work there.)
 
 ## AI assistant (floating chat widget)
 
