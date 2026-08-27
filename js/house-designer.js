@@ -40,13 +40,14 @@ import { createWalkthroughMode } from './walkthrough-mode.js';
 
   function fillChips(group, items, type, isMulti) {
     group.innerHTML = '';
-    items.forEach(function (item) {
+    items.forEach(function (item, idx) {
       const label = document.createElement('label');
       label.className = 'chip';
       const input = document.createElement('input');
       input.type = isMulti ? 'checkbox' : 'radio';
       input.name = type;
       input.value = item.id;
+      if (!isMulti && idx === 0) input.checked = true;
       const swatch = document.createElement('span');
       swatch.className = 'chip__swatch';
       if (type === 'material') swatch.style.background = '#' + item.wall.toString(16).padStart(6, '0');

@@ -86,7 +86,7 @@ export function createWalkthroughMode(camera, renderer, getBounds) {
   function enable() {
     state.enabled = true;
     const b = getBounds();
-    camera.position.set(0, b.eyeY, b.minZ + 0.8);
+    camera.position.set(0, b.eyeY, b.maxZ - 0.8);
     state.yaw = 0;
     state.pitch = 0;
     camera.rotation.order = 'YXZ';
