@@ -1,10 +1,11 @@
 /**
  * InstaBuilt — House Designer (3D configurator) — entry module.
  *
- * Builds the options panel, lazy-inits the Three.js scene, drives orbit /
- * walkthrough modes, and saves the selected options (not 3D state) to the
- * `house_designs` table. If WebGL is unavailable the page falls back to the
- * classic preset form (js/house-designer-fallback.js).
+ * Options panel (product line → size → material/colour → interior package →
+ * smart-home → furniture), a live Three.js house, orbit + walkthrough modes,
+ * and interior furnishing (click-to-place furniture). Saves the selected
+ * options (not 3D state) to `house_designs`. WebGL-less browsers fall back to
+ * the classic form (js/house-designer-fallback.js).
  */
 import * as THREE from 'three';
 import { PRODUCT_LINES, MATERIALS, INTERIOR_PACKAGES, SMART_HOME, DIMS, resolveConfig, toSavePayload } from './models-config.js';
@@ -12,6 +13,7 @@ import { createScene } from './three-scene.js';
 import { createHouse, render, interiorBounds } from './house-configurator.js';
 import { createOrbitMode } from './orbit-mode.js';
 import { createWalkthroughMode } from './walkthrough-mode.js';
+import { createInteriorDesigner, FURNITURE_CATALOG } from './interior-designer.js';
 
 (async function () {
   'use strict';
@@ -21,7 +23,7 @@ import { createWalkthroughMode } from './walkthrough-mode.js';
   const IB = window.INSTABUILT;
   if (!IB || !IB.supabase) return;
 
-  // ---------- Build the options panel ----------
+  // ---------- Options panel ----------
   const lineSel = document.getElementById('product_line');
   const sizeSel = document.getElementById('size');
   const materialGroup = document.getElementById('materials');
@@ -72,7 +74,6 @@ import { createWalkthroughMode } from './walkthrough-mode.js';
   fillChips(interiorGroup, INTERIOR_PACKAGES, 'interior', false);
   fillChips(smartGroup, SMART_HOME, 'smart', true);
 
-  // ---------- Read current selection ----------
   function readSelection() {
     const material = materialGroup.querySelector('input[name="material"]:checked');
     const interior = interiorGroup.querySelector('input[name="interior"]:checked');
@@ -100,11 +101,17 @@ import { createWalkthroughMode } from './walkthrough-mode.js';
   const house = createHouse();
   sceneCtx.scene.add(house);
 
+  const furnitureGroup = new THREE.Group();
+  furnitureGroup.name = 'furniture';
+  sceneCtx.scene.add(furnitureGroup);
+  const interior = createInteriorDesigner(sceneCtx.scene, furnitureGroup, sceneCtx.renderer.domElement, sceneCtx.camera);
+
   let selection = readSelection();
   let config = resolveConfig(selection);
   render(house, config);
 
-  const centerY = (config.line.storeys * DIMS.wallHeight) / 2;
+  const bounds = function () { return interiorBounds(resolveConfig(readSelection())); };
+  interior.setBounds(bounds());
 
   function defaultView() {
     const c = resolveConfig(readSelection());
@@ -117,14 +124,86 @@ import { createWalkthroughMode } from './walkthrough-mode.js';
   }
 
   const orbit = createOrbitMode(sceneCtx.scene, sceneCtx.camera, sceneCtx.renderer);
-  const walkthrough = createWalkthroughMode(sceneCtx.camera, sceneCtx.renderer, function () {
-    return interiorBounds(resolveConfig(readSelection()));
-  });
+  const walkthrough = createWalkthroughMode(
+    sceneCtx.camera,
+    sceneCtx.renderer,
+    bounds,
+    function () { return interior.colliders(); }
+  );
 
   const dv = defaultView();
   sceneCtx.camera.position.copy(dv.pos);
   orbit.setDefaults(dv.pos, dv.target);
 
+  // ---------- Interior furnishing ----------
+  const palette = document.getElementById('furniture-palette');
+  const eraseBtn = document.getElementById('furniture-erase');
+  let activeTool = null;
+
+  function updateToolUI() {
+    palette.querySelectorAll('.furniture-item').forEach(function (b) {
+      b.classList.toggle('is-active', activeTool === 'place:' + b.dataset.id);
+    });
+    eraseBtn.classList.toggle('is-active', activeTool === 'erase');
+  }
+
+  function selectTool(kind, id) {
+    if (kind === 'place' && activeTool === 'place:' + id) kind = null;
+    else if (kind === 'erase' && activeTool === 'erase') kind = null;
+
+    if (kind === 'place') {
+      activeTool = 'place:' + id;
+      interior.setTool({ kind: 'place', id: id });
+      interior.showGhost(id);
+    } else if (kind === 'erase') {
+      activeTool = 'erase';
+      interior.clearGhost();
+      interior.setTool({ kind: 'erase' });
+    } else {
+      activeTool = null;
+      interior.clearGhost();
+      interior.setTool(null);
+    }
+    updateToolUI();
+  }
+
+  FURNITURE_CATALOG.forEach(function (def) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'furniture-item';
+    b.dataset.id = def.id;
+    b.textContent = def.label;
+    b.addEventListener('click', function () { selectTool('place', def.id); });
+    palette.appendChild(b);
+  });
+  eraseBtn.addEventListener('click', function () { selectTool('erase'); });
+
+  // Seed a default furnished interior.
+  function seedLayout() {
+    const b = bounds();
+    const cx = (b.minX + b.maxX) / 2;
+    interior.placeAt('rug', cx - 0.6, b.minZ + 1.6);
+    interior.placeAt('couch', cx - 1.4, b.minZ + 1.1);
+    interior.placeAt('coffee-table', cx - 1.4, b.minZ + 2.3);
+    interior.placeAt('floor-lamp', b.maxX - 1.1, b.minZ + 1.1);
+    interior.placeAt('tv', cx + 1.3, b.minZ + 0.7);
+  }
+
+  function applyPackageAccent() {
+    const pkg = INTERIOR_PACKAGES.find(function (p) { return p.id === readSelection().interiorId; }) || INTERIOR_PACKAGES[0];
+    const b = bounds();
+    if ((pkg.accent === 'kitchen' || pkg.accent === 'kitchen+bath') && !interior.hasItem('kitchen-counter')) {
+      interior.placeAt('kitchen-counter', b.minX + 2.2, b.maxZ - 1.4);
+    }
+    if (pkg.accent === 'kitchen+bath' && !interior.hasItem('bathpod')) {
+      interior.placeAt('bathpod', b.maxX - 1.6, b.minZ + 1.4);
+    }
+  }
+
+  seedLayout();
+  applyPackageAccent();
+
+  // ---------- Modes ----------
   let mode = 'orbit';
 
   function setMode(next) {
@@ -135,6 +214,10 @@ import { createWalkthroughMode } from './walkthrough-mode.js';
     const hint = document.getElementById('walkthrough-hint');
     if (next === 'walkthrough') {
       orbit.disable();
+      interior.clearGhost();
+      interior.setTool(null);
+      activeTool = null;
+      updateToolUI();
       walkthrough.enable();
       if (hint) hint.classList.add('is-visible');
     } else {
@@ -152,12 +235,10 @@ import { createWalkthroughMode } from './walkthrough-mode.js';
     b.addEventListener('click', function () { setMode(b.getAttribute('data-mode')); });
   });
 
-  // Click to look in walkthrough (pointer lock)
   viewer.addEventListener('click', function () {
     if (mode === 'walkthrough' && !walkthrough.isLocked()) walkthrough.requestLock();
   });
 
-  // Reset view
   document.getElementById('reset-view').addEventListener('click', function () {
     if (mode === 'walkthrough') walkthrough.enable();
     else {
@@ -168,13 +249,14 @@ import { createWalkthroughMode } from './walkthrough-mode.js';
     }
   });
 
-  // ---------- Live updates on selection change ----------
+  // ---------- Live updates ----------
   function onSelectionChange() {
     selection = readSelection();
     config = resolveConfig(selection);
     render(house, config);
-    const c = config;
-    const cy = (c.line.storeys * DIMS.wallHeight) / 2;
+    interior.setBounds(bounds());
+    interior.clampAll();
+    const cy = (config.line.storeys * DIMS.wallHeight) / 2;
     if (mode === 'orbit') orbit.setTarget(new THREE.Vector3(0, cy, 0));
   }
 
@@ -182,6 +264,7 @@ import { createWalkthroughMode } from './walkthrough-mode.js';
   [materialGroup, interiorGroup, smartGroup].forEach(function (g) {
     g.addEventListener('change', onSelectionChange);
   });
+  interiorGroup.addEventListener('change', applyPackageAccent);
   lineSel.addEventListener('change', refreshSizes);
 
   // ---------- Save flow ----------
@@ -194,6 +277,7 @@ import { createWalkthroughMode } from './walkthrough-mode.js';
   document.getElementById('save-design').addEventListener('click', function (e) {
     const btn = e.currentTarget;
     const payload = toSavePayload(session.user.id, readSelection());
+    interior.summary().forEach(function (s) { payload.interior_selections.push('Furniture: ' + s); });
     btn.disabled = true;
     setStatus('Saving…', true);
     IB.supabase.from('house_designs')

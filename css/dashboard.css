@@ -205,6 +205,17 @@ html:not(.webgl) #designer-fallback { display: block; }
 .chip input:checked ~ .chip__label { background: var(--clay); border-color: var(--clay); color: #fff; }
 .chip input:focus-visible ~ .chip__label { outline: 2px solid var(--clay); outline-offset: 2px; }
 
+.furniture-hint { font-size: 0.8rem; color: var(--muted); margin: -0.2rem 0 0.7rem; }
+.furniture-palette { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; margin-bottom: 0.7rem; }
+.furniture-item {
+  padding: 0.5rem 0.35rem; font-size: 0.76rem; font-weight: 500; color: var(--ink-soft);
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface);
+  cursor: pointer; transition: all var(--dur) var(--ease); text-align: center; line-height: 1.2;
+}
+.furniture-item:hover { border-color: var(--ink); color: var(--ink); }
+.furniture-item.is-active { background: var(--clay); border-color: var(--clay); color: #fff; }
+#furniture-erase.is-active { background: var(--ink); border-color: var(--ink); color: #fff; }
+
 .designer-panel .btn { width: 100%; justify-content: center; margin-top: 0.4rem; }
 
 .designer-viewer { position: relative; background: var(--bg-alt); overflow: hidden; }

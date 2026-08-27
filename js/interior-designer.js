@@ -335,7 +335,9 @@ export function createInteriorDesigner(scene, furnitureGroup, domElement, camera
     setTool: setTool,
     getTool: function () { return tool; },
     placeAt: placeAt,
+    showGhost: function (id) { makeGhost(id); },
     clearGhost: function () { if (ghost) { scene.remove(ghost); ghost = null; } },
+    hasItem: function (id) { return items.some(function (it) { return it.id === id; }); },
     setBounds: function (b) { bounds = b; },
     clampAll: function () {
       items.forEach(function (it) {
