@@ -1,22 +1,29 @@
 /**
  * InstaBuilt — AI assistant serverless function (api/agent.js).
  *
- * Deployed to Vercel. The Anthropic API key lives ONLY in the Vercel
- * environment variable ANTHROPIC_API_KEY — never in any client-side file.
+ * Deployed to Vercel. The Groq API key lives ONLY in the environment
+ * variable GROQ_API_KEY — never in any client-side file.
  *
- *   Vercel → Project Settings → Environment Variables → ANTHROPIC_API_KEY
- *   (optional) ANTHROPIC_MODEL to override the default model.
+ *   Local dev:  copy .env.example → .env  (vercel dev reads it automatically)
+ *   Vercel:     Project Settings → Environment Variables → GROQ_API_KEY
+ *   (optional)  GROQ_MODEL to override the default model
+ *               (default: openai/gpt-oss-120b)
  *
  * Endpoint: POST /api/agent
  *   Body:    { "messages": [ { role, content }, ... ] }   (Anthropic format)
  *   Returns: { "type": "text", "text", "messages" }             — final answer
  *        or  { "type": "tool_use", "toolCalls", "messages" }    — tools to run client-side
  *
- * Tool use is executed on the FRONTEND (js/ai-agent.js): the assistant asks to
- * call set_house_option / navigate_to_page / get_current_estimate, we return the
+ * The frontend (js/ai-agent.js) speaks Anthropic-shaped messages and expects
+ * Anthropic-shaped responses; this function is a translation layer that
+ * converts between that shape and Groq's OpenAI-compatible API, so the
+ * widget itself needed no changes.
+ *
+ * Tool use is executed on the FRONTEND: the assistant asks to call
+ * set_house_option / navigate_to_page / get_current_estimate, we return the
  * tool_use block, the frontend runs it and sends the tool_result back in the
  * next request. This function stays stateless — it just forwards history to
- * Anthropic and relays the response.
+ * Groq and relays the response.
  */
 
 const SYSTEM_PROMPT = `You are InstaBuilt's on-site sales and support assistant. InstaBuilt designs, engineers and manufactures modular and offsite buildings (Germany, Switzerland, Austria, Kosovo; Texas and Delaware in the US). Every building is made in a factory and assembled on site up to 75% faster, engineered to KfW40 energy standard.
@@ -38,7 +45,7 @@ SITE FEATURES you can point people to:
 - Project Tracking (dashboard/project-tracking.html) — follows a build through 6 stages: Contract Signed → Factory Production of Modular Parts → Foundation Preparation → Utility Infrastructure → House Assembly → Handover/Delivery. It shows a progress bar (completed stages filled, the current stage highlighted, future stages greyed out) and a timeline. Use this to tell people how to see their build's progress in plain language.
 
 YOUR JOB:
-Act as a warm, concise sales/support guide. The visitor usually arrives needing a home (their starting point is "I need a house"). Ask clarifying questions ONE AT A TIME to narrow down the right product: who it's for and household size, budget range, whether they already have land, location, and priorities (speed vs. customization, sustainability). Then recommend a product line and offer to configure or price it.
+Be a warm, knowledgeable assistant who knows InstaBuilt AND homes in general. Answer questions about houses, home buying, architecture, modular and offsite construction, energy efficiency and renovation naturally — you do not need to force InstaBuilt into every answer. When the visitor's need matches what InstaBuilt builds (they usually arrive needing a home), guide them: ask clarifying questions ONE AT A TIME to narrow down the right product — who it's for and household size, budget range, whether they already have land, location, and priorities (speed vs. customization, sustainability) — then recommend a product line and offer to configure or price it. Keep the conversation natural and conversational, not scripted.
 
 TOOL GUIDANCE:
 - set_house_option(product_line, size, material, interior_package) — record a choice the visitor has made. product_line must be one of the 7 product-line names above. size is like "104 m²". material is like "Timber — Charcoal". interior_package is "Standard", "Comfort" or "Premium".
@@ -100,6 +107,47 @@ function trimMessages(list, max) {
   return arr;
 }
 
+// ---- Anthropic-shaped messages → OpenAI (Groq) chat format ----
+function toOpenAI(messages) {
+  const out = [];
+  for (const m of messages) {
+    if (!m || !m.role) continue;
+    if (m.role === 'system') {
+      out.push({ role: 'system', content: String(m.content) });
+    } else if (m.role === 'user') {
+      if (typeof m.content === 'string') {
+        out.push({ role: 'user', content: m.content });
+      } else if (Array.isArray(m.content)) {
+        for (const b of m.content) {
+          if (!b) continue;
+          if (b.type === 'tool_result') {
+            // one tool message per result, referencing the original tool call
+            out.push({ role: 'tool', tool_call_id: b.tool_use_id, content: String(b.content == null ? '' : b.content) });
+          } else if (b.type === 'text') {
+            out.push({ role: 'user', content: b.text });
+          }
+        }
+      }
+    } else if (m.role === 'assistant') {
+      let text = '';
+      const toolCalls = [];
+      const blocks = Array.isArray(m.content) ? m.content : [{ type: 'text', text: String(m.content) }];
+      for (const b of blocks) {
+        if (!b) continue;
+        if (b.type === 'text') text += b.text;
+        else if (b.type === 'tool_use') {
+          toolCalls.push({ id: b.id, type: 'function', function: { name: b.name, arguments: JSON.stringify(b.input || {}) } });
+        }
+      }
+      const msg = { role: 'assistant', content: text || null };
+      if (toolCalls.length) msg.tool_calls = toolCalls;
+      out.push(msg);
+    }
+    // anything else is dropped — the tool loop never produces it
+  }
+  return out;
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
@@ -113,10 +161,10 @@ module.exports = async function handler(req, res) {
   // 1) Config check — the API key MUST be present and non-empty.
   //    Log clearly so a missing env var is obvious in Vercel logs.
   // ------------------------------------------------------------------
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey || !apiKey.trim()) {
-    console.error('[agent] ANTHROPIC_API_KEY is not set');
-    res.status(503).json({ error: 'ANTHROPIC_API_KEY is not set' });
+    console.error('[agent] GROQ_API_KEY is not set');
+    res.status(503).json({ error: 'GROQ_API_KEY is not set' });
     return;
   }
 
@@ -139,43 +187,46 @@ module.exports = async function handler(req, res) {
   }
 
   const messages = trimMessages(rawMessages, 40);
+  const openaiMessages = toOpenAI(messages);
 
   // ------------------------------------------------------------------
-  // 3) Call Anthropic — wrapped in its own try/catch; log the FULL error.
-  //    Model is configurable via ANTHROPIC_MODEL (e.g. claude-sonnet-4-5-20250929).
+  // 3) Call Groq (OpenAI-compatible chat completions) — wrapped in its
+  //    own try/catch; log the FULL error. Model is configurable via
+  //    GROQ_MODEL (default: openai/gpt-oss-120b).
   // ------------------------------------------------------------------
   const payload = {
-    model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+    model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
     max_tokens: 1024,
-    system: SYSTEM_PROMPT,
-    tools: TOOLS,
-    messages
+    temperature: 0.7,
+    messages: [{ role: 'system', content: SYSTEM_PROMPT }].concat(openaiMessages),
+    tools: TOOLS.map((t) => ({
+      type: 'function',
+      function: { name: t.name, description: t.description, parameters: t.input_schema }
+    }))
   };
 
   let upstream;
   try {
-    upstream = await fetch('https://api.anthropic.com/v1/messages', {
+    upstream = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
+        authorization: 'Bearer ' + apiKey,
+        'user-agent': 'instabuilt-agent/1.0'
       },
       body: JSON.stringify(payload)
     });
   } catch (err) {
-    console.error('[agent] Network error calling Anthropic:', err);
-    res.status(502).json({ error: 'Could not reach the Anthropic API: ' + (err && err.message) });
+    console.error('[agent] Network error calling Groq:', err);
+    res.status(502).json({ error: 'Could not reach the Groq API: ' + (err && err.message) });
     return;
   }
 
   // Log status + body so auth / model / request-shape errors are visible.
   if (!upstream.ok) {
     const rawBody = await upstream.text().catch(() => '');
-    console.error('[agent] Anthropic returned non-2xx:', upstream.status, rawBody);
-    // DEBUG: return the real error message so it's visible in the browser
-    // Network tab / console. Remove the detailed message before final deploy.
-    res.status(502).json({ error: 'Anthropic API error ' + upstream.status + ': ' + rawBody });
+    console.error('[agent] Groq returned non-2xx:', upstream.status, rawBody);
+    res.status(502).json({ error: 'Groq API error ' + upstream.status + ': ' + rawBody });
     return;
   }
 
@@ -183,21 +234,29 @@ module.exports = async function handler(req, res) {
   try {
     data = await upstream.json();
   } catch (err) {
-    console.error('[agent] Anthropic returned non-JSON body:', err && err.message);
-    res.status(502).json({ error: 'Anthropic API returned an invalid response.' });
+    console.error('[agent] Groq returned non-JSON body:', err && err.message);
+    res.status(502).json({ error: 'Groq API returned an invalid response.' });
     return;
   }
 
-  const toolCalls = [];
-  let text = '';
-  (data.content || []).forEach((block) => {
-    if (block.type === 'text') text += block.text;
-    else if (block.type === 'tool_use') toolCalls.push({ id: block.id, name: block.name, input: block.input || {} });
+  const choice = data.choices && data.choices[0];
+  const msg = (choice && choice.message) || {};
+  let text = typeof msg.content === 'string' ? msg.content : '';
+
+  // ---- OpenAI tool_calls → Anthropic-shaped tool_use blocks ----
+  const toolCalls = (msg.tool_calls || []).map((tc) => {
+    let input = {};
+    try { input = JSON.parse(tc.function.arguments || '{}'); } catch (e) { input = {}; }
+    return { id: tc.id, name: tc.function.name, input };
   });
 
-  const updatedMessages = messages.concat([{ role: 'assistant', content: data.content || [] }]);
+  const content = [];
+  if (text) content.push({ type: 'text', text });
+  for (const tc of toolCalls) content.push({ type: 'tool_use', id: tc.id, name: tc.name, input: tc.input });
 
-  if (data.stop_reason === 'tool_use' && toolCalls.length) {
+  const updatedMessages = messages.concat([{ role: 'assistant', content }]);
+
+  if (choice && choice.finish_reason === 'tool_calls' && toolCalls.length) {
     res.status(200).json({ type: 'tool_use', toolCalls, messages: updatedMessages });
   } else {
     res.status(200).json({ type: 'text', text: text.trim(), messages: updatedMessages });
