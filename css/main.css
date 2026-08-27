@@ -222,6 +222,9 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 500; line-height
 
 /* Real InstaBuilt logo (insta_logo.png — cropped wordmark, brand green) */
 .brand-logo { height: 48px; width: auto; display: block; }
+/* Dark surfaces: lift the green so it stays visible */
+.site-header--transparent .brand-logo,
+.site-footer .brand-logo { filter: brightness(1.45); }
 @media (max-width: 640px) {
   .brand-logo { height: 32px; }
 }
