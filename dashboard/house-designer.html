@@ -67,51 +67,88 @@
         <!-- ============ 3D configurator (requires WebGL) ============ -->
         <div class="designer">
           <aside class="designer-panel" aria-label="Designer options">
-            <h1>House Designer</h1>
-            <p class="lead">Configure your build — watch it update in 3D, then get a live estimate.</p>
+            <h1>Design Your Dream Home</h1>
+            <p class="lead">Build it step by step — watch it come to life in 3D, then get a live estimate.</p>
 
-            <div class="field">
-              <label for="product_line">Product line</label>
-              <select id="product_line"></select>
+            <ol class="game-step-track" id="game-step-track" aria-label="Design steps"></ol>
+            <p class="game-step-caption" id="game-step-caption" aria-live="polite"></p>
+
+            <div class="game-wizard">
+              <section class="designer-step" data-step="1">
+                <span class="game-step-title">Step 1 — Product line</span>
+                <div class="field">
+                  <label for="product_line">Product line</label>
+                  <select id="product_line"></select>
+                </div>
+              </section>
+              <section class="designer-step" data-step="2">
+                <span class="game-step-title">Step 2 — Size</span>
+                <div class="field">
+                  <label for="size">Size variant</label>
+                  <select id="size"></select>
+                </div>
+              </section>
+              <section class="designer-step" data-step="3">
+                <span class="game-step-title">Step 3 — Materials</span>
+                <fieldset class="field">
+                  <legend>Exterior material &amp; colour</legend>
+                  <div class="chip-group" id="materials"></div>
+                </fieldset>
+              </section>
+              <section class="designer-step" data-step="4">
+                <span class="game-step-title">Step 4 — Interior package</span>
+                <fieldset class="field">
+                  <legend>Interior package</legend>
+                  <div class="chip-group" id="interiors"></div>
+                </fieldset>
+              </section>
+              <section class="designer-step" data-step="5">
+                <span class="game-step-title">Step 5 — Smart home</span>
+                <fieldset class="field">
+                  <legend>Smart-home add-ons <small>(visual only)</small></legend>
+                  <div class="chip-group" id="smart"></div>
+                </fieldset>
+              </section>
+              <section class="designer-step" data-step="6">
+                <span class="game-step-title">Step 6 — Furnish your home</span>
+                <p class="furniture-hint">Pick an item, then click the floor in the 3D view to place it. Use <strong>Erase item</strong> to remove one.</p>
+                <div class="furniture-palette" id="furniture-palette"></div>
+                <button class="btn btn-ghost btn-sm" id="furniture-erase" type="button">Erase item</button>
+              </section>
             </div>
-            <div class="field">
-              <label for="size">Size variant</label>
-              <select id="size"></select>
-            </div>
-            <fieldset class="field">
-              <legend>Exterior material &amp; colour</legend>
-              <div class="chip-group" id="materials"></div>
-            </fieldset>
-            <fieldset class="field">
-              <legend>Interior package</legend>
-              <div class="chip-group" id="interiors"></div>
-            </fieldset>
-            <fieldset class="field">
-              <legend>Smart-home add-ons <small>(visual only)</small></legend>
-              <div class="chip-group" id="smart"></div>
-            </fieldset>
-            <fieldset class="field">
-              <legend>Furnish the interior</legend>
-              <p class="furniture-hint">Pick an item, then click the floor in the 3D view to place it. Use <strong>Erase item</strong> to remove one.</p>
-              <div class="furniture-palette" id="furniture-palette"></div>
-              <button class="btn btn-ghost btn-sm" id="furniture-erase" type="button">Erase item</button>
-            </fieldset>
 
             <p class="form-status" role="status" aria-live="polite"></p>
+
+            <div class="game-wizard-nav">
+              <button class="btn btn-ghost" id="game-prev" type="button">Back</button>
+              <button class="btn btn-primary" id="game-next" type="button">Next<span class="arrow" aria-hidden="true">→</span></button>
+            </div>
             <button class="btn btn-primary" id="save-design" type="button">Save design &amp; estimate<span class="arrow" aria-hidden="true">→</span></button>
           </aside>
 
           <section class="designer-viewer" aria-label="3D house viewer">
             <div id="viewer"></div>
             <div class="viewer-loading" id="viewer-loading"><div class="spinner" aria-hidden="true"></div><p>Loading 3D view…</p></div>
+
+            <div class="game-flash" id="game-flash" aria-hidden="true"></div>
+            <div class="mm-wrap" id="mm-wrap" hidden>
+              <canvas id="minimap" width="170" height="170"></canvas>
+              <span class="mm-title">Minimap</span>
+            </div>
+            <div class="wt-crosshair" id="wt-crosshair" hidden><span></span></div>
+            <div class="game-look-label" id="game-look-label" hidden></div>
+            <div class="game-info-popup" id="game-info-popup" role="dialog" aria-label="Object details" hidden></div>
+            <div class="game-room-toast" id="game-room-toast" hidden></div>
+
             <div class="viewer-toolbar">
               <div class="seg" role="group" aria-label="View mode">
                 <button class="seg__btn is-active" type="button" data-mode="orbit">Orbit</button>
                 <button class="seg__btn" type="button" data-mode="walkthrough">Walkthrough</button>
               </div>
+              <button class="btn btn-ghost btn-sm" id="sound-toggle" type="button" aria-pressed="false" title="Enable feedback sounds">Sound</button>
               <button class="btn btn-ghost btn-sm" id="reset-view" type="button">Reset view</button>
             </div>
-            <div class="walkthrough-hint" id="walkthrough-hint">Click the view to look around · WASD/arrows to move · Shift sprint · Space jump · Esc to release</div>
+            <div class="walkthrough-hint" id="walkthrough-hint">Click the view to look around · WASD to move · Shift sprint · Space jump · Esc to release</div>
           </section>
         </div>
 

@@ -14,6 +14,8 @@ import { createHouse, render, interiorBounds } from './house-configurator.js';
 import { createOrbitMode } from './orbit-mode.js';
 import { createWalkthroughMode } from './walkthrough-mode.js';
 import { createInteriorDesigner, FURNITURE_CATALOG } from './interior-designer.js';
+import { createGameUI } from './game-ui.js';
+import { createMinimap } from './minimap.js';
 
 (async function () {
   'use strict';
@@ -249,6 +251,37 @@ import { createInteriorDesigner, FURNITURE_CATALOG } from './interior-designer.j
     }
   });
 
+  // ---------- Game UI (step tracker, interactions, mini-map) ----------
+  function onStepChange(n) {
+    if (n >= 6) {
+      if (mode !== 'orbit') setMode('orbit');
+    } else {
+      interior.clearGhost();
+      interior.setTool(null);
+      activeTool = null;
+      updateToolUI();
+    }
+  }
+
+  const minimap = createMinimap(document.getElementById('minimap'));
+  minimap.setBounds(bounds());
+
+  const gameUI = createGameUI({
+    scene: sceneCtx.scene,
+    camera: sceneCtx.camera,
+    renderer: sceneCtx.renderer,
+    house: house,
+    interior: interior,
+    walkthrough: walkthrough,
+    bounds: bounds,
+    mode: function () { return mode; },
+    minimap: minimap,
+    steps: ['Product line', 'Size', 'Materials', 'Interior', 'Smart home', 'Furnish'],
+    onStepChange: onStepChange
+  });
+  interior.setOnChange(function () { gameUI.refresh(); });
+  gameUI.init();
+
   // ---------- Live updates ----------
   function onSelectionChange() {
     selection = readSelection();
@@ -258,6 +291,8 @@ import { createInteriorDesigner, FURNITURE_CATALOG } from './interior-designer.j
     interior.clampAll();
     const cy = (config.line.storeys * DIMS.wallHeight) / 2;
     if (mode === 'orbit') orbit.setTarget(new THREE.Vector3(0, cy, 0));
+    gameUI.onSelectionChange();
+    gameUI.refresh();
   }
 
   lineSel.addEventListener('change', function () { refreshSizes(); onSelectionChange(); });
@@ -299,6 +334,7 @@ import { createInteriorDesigner, FURNITURE_CATALOG } from './interior-designer.j
   sceneCtx.start(function (dt) {
     if (mode === 'orbit') orbit.update();
     else walkthrough.update(dt);
+    gameUI.frame(dt);
   });
 
   const loading = document.getElementById('viewer-loading');
