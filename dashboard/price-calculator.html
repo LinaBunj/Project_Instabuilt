@@ -43,33 +43,50 @@
           <li><a href="profile.html">Profile</a></li>
         </ul>
       </nav>
+
       <main class="dash-main" id="main">
-        <div id="estimate">
+        <div class="calc">
           <h1>Price Calculator</h1>
-          <p class="lead">An indicative estimate, calculated from your saved design.</p>
+          <p class="lead">A live estimate — change any option and the price updates instantly.</p>
+          <p class="estimate-note">Estimated price — a final quote is provided after consultation.</p>
 
-          <div class="dash-card">
-            <h2>Your design</h2>
-            <dl class="summary-list">
-              <div><dt>Product line</dt><dd id="sum-line">—</dd></div>
-              <div><dt>Size</dt><dd id="sum-size">—</dd></div>
-              <div><dt>Materials</dt><dd id="sum-materials">—</dd></div>
-              <div><dt>Interior</dt><dd id="sum-interior">—</dd></div>
-            </dl>
-          </div>
+          <div class="calc-grid">
+            <div class="dash-card calc__card">
+              <h2>Configuration</h2>
+              <div class="field">
+                <label for="product_line">Product line</label>
+                <select id="product_line"></select>
+              </div>
+              <div class="field">
+                <label for="size">Size</label>
+                <select id="size"></select>
+              </div>
+              <fieldset class="field">
+                <legend>Exterior material</legend>
+                <div class="chip-group" id="materials"></div>
+              </fieldset>
+              <fieldset class="field">
+                <legend>Interior package</legend>
+                <div class="chip-group" id="interiors"></div>
+              </fieldset>
+              <fieldset class="field">
+                <legend>Add-ons</legend>
+                <div class="chip-group" id="addons"></div>
+              </fieldset>
+            </div>
 
-          <div class="dash-card">
-            <h2>Breakdown</h2>
-            <table class="breakdown">
-              <tbody id="breakdown"></tbody>
-            </table>
-            <div class="estimate-total">
-              <span class="label">Estimated total</span>
-              <span class="value" id="total">—</span>
+            <div class="dash-card calc__card">
+              <h2>Breakdown</h2>
+              <table class="breakdown">
+                <tbody id="breakdown"></tbody>
+              </table>
+              <div class="estimate-total">
+                <span class="label">Estimated total</span>
+                <span class="value" id="total">—</span>
+              </div>
+              <p class="calc__save" id="save-status" role="status" aria-live="polite"></p>
             </div>
           </div>
-
-          <p class="muted" id="save-note"></p>
         </div>
       </main>
     </div>
@@ -79,6 +96,6 @@
   <script src="../js/supabase-client.js"></script>
   <script src="../js/auth.js"></script>
   <script src="../js/auth-guard.js"></script>
-  <script src="../js/price-calculator.js"></script>
+  <script type="module" src="../js/price-calculator.js"></script>
 </body>
 </html>

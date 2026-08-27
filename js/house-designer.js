@@ -260,12 +260,12 @@ import { createInteriorDesigner, FURNITURE_CATALOG } from './interior-designer.j
     if (mode === 'orbit') orbit.setTarget(new THREE.Vector3(0, cy, 0));
   }
 
-  [lineSel, sizeSel].forEach(function (el) { el.addEventListener('change', onSelectionChange); });
+  lineSel.addEventListener('change', function () { refreshSizes(); onSelectionChange(); });
+  sizeSel.addEventListener('change', onSelectionChange);
   [materialGroup, interiorGroup, smartGroup].forEach(function (g) {
     g.addEventListener('change', onSelectionChange);
   });
   interiorGroup.addEventListener('change', applyPackageAccent);
-  lineSel.addEventListener('change', refreshSizes);
 
   // ---------- Save flow ----------
   const status = document.querySelector('.designer-panel .form-status');
