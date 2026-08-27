@@ -1,0 +1,200 @@
+/* =========================================================================
+   InstaBuilt — floating AI assistant widget (ai-agent.css)
+   Self-contained styles for the bottom-right chat widget. Loaded after
+   main.css / dashboard.css so it layers cleanly on top of the theme.
+   ========================================================================= */
+
+.ai-agent,
+.ai-agent * { box-sizing: border-box; }
+
+.ai-agent {
+  --ai-clay: #6b7c3f;
+  --ai-clay-deep: #4d5c2b;
+  --ai-clay-soft: #edf0e1;
+  --ai-muted: #707070;
+  --ai-line: #e8e8e8;
+  --ai-ink: #0a0a0a;
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 9999;
+  font-family: 'Outfit', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  color: var(--ai-ink);
+  line-height: 1.45;
+}
+
+/* Collapsed toggle bubble */
+.ai-agent__toggle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border: none;
+  border-radius: 50%;
+  background: var(--ai-clay);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(10, 10, 10, 0.22);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.ai-agent__toggle:hover { background: var(--ai-clay-deep); transform: translateY(-2px); }
+.ai-agent__toggle:focus-visible { outline: 2px solid var(--ai-clay-deep); outline-offset: 3px; }
+.ai-agent__toggle svg { width: 26px; height: 26px; display: block; }
+.ai-agent__toggle .ai-agent__close { display: none; }
+
+/* Expanded panel */
+.ai-agent__panel {
+  position: absolute;
+  right: 0;
+  bottom: 68px;
+  width: 370px;
+  max-width: calc(100vw - 36px);
+  height: 560px;
+  max-height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid var(--ai-line);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(10, 10, 10, 0.25);
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+/* Header */
+.ai-agent__head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  background: var(--ai-clay);
+  color: #fff;
+}
+.ai-agent__avatar {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.ai-agent__head-text { display: flex; flex-direction: column; line-height: 1.2; }
+.ai-agent__head-title { font-weight: 600; font-size: 0.98rem; }
+.ai-agent__head-sub { font-size: 0.74rem; opacity: 0.82; }
+
+/* Messages */
+.ai-agent__messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem 1rem 0.5rem;
+  background: #fafaf8;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.ai-msg { display: flex; }
+.ai-msg--user { justify-content: flex-end; }
+.ai-msg__bubble {
+  max-width: 82%;
+  padding: 0.6rem 0.85rem;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.ai-msg--user .ai-msg__bubble {
+  background: var(--ai-clay);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.ai-msg--assistant .ai-msg__bubble {
+  background: #fff;
+  border: 1px solid var(--ai-line);
+  color: var(--ai-ink);
+  border-bottom-left-radius: 4px;
+}
+.ai-msg--sys .ai-msg__bubble {
+  background: transparent;
+  color: var(--ai-muted);
+  font-size: 0.8rem;
+  font-style: italic;
+  padding: 0.05rem 0.35rem;
+}
+
+/* Typing indicator */
+.ai-typing .ai-msg__bubble { display: flex; gap: 4px; align-items: center; padding: 0.75rem 0.9rem; }
+.ai-typing .ai-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ai-muted);
+  animation: ai-bounce 1.2s infinite ease-in-out;
+}
+.ai-typing .ai-dot:nth-child(2) { animation-delay: 0.15s; }
+.ai-typing .ai-dot:nth-child(3) { animation-delay: 0.3s; }
+@keyframes ai-bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* Input */
+.ai-agent__input {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  padding: 0.7rem 0.8rem;
+  border-top: 1px solid var(--ai-line);
+  background: #fff;
+}
+.ai-agent__input textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--ai-line);
+  border-radius: 12px;
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+  font-size: 0.92rem;
+  min-height: 40px;
+  max-height: 120px;
+  background: #fafaf8;
+  color: var(--ai-ink);
+}
+.ai-agent__input textarea:focus { outline: none; border-color: var(--ai-clay); }
+.ai-agent__send {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 12px;
+  background: var(--ai-clay);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+.ai-agent__send:hover { background: var(--ai-clay-deep); }
+.ai-agent__send:disabled { opacity: 0.5; cursor: default; }
+.ai-agent__send svg { width: 18px; height: 18px; }
+
+/* Open state */
+.ai-agent.is-open .ai-agent__panel { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.ai-agent.is-open .ai-agent__toggle .ai-agent__open { display: none; }
+.ai-agent.is-open .ai-agent__toggle .ai-agent__close { display: block; }
+
+/* Mobile — never wider than the viewport */
+@media (max-width: 480px) {
+  .ai-agent { right: 12px; bottom: 12px; }
+  .ai-agent__toggle { width: 54px; height: 54px; }
+  .ai-agent__panel { width: calc(100vw - 24px); height: min(68vh, 520px); }
+}
