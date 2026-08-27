@@ -12,12 +12,13 @@ console.log('GROQ_API_KEY set:', !!process.env.GROQ_API_KEY, '| model:', process
 
 // 2) Mock req/res
 function makeRes() {
-  const state = { status: 200, body: null };
+  const state = { status: 200, body: null, ended: false };
   return {
     state,
     setHeader() {},
     status(c) { state.status = c; return this; },
     json(b) { state.body = b; },
+    end() { state.ended = true; },
   };
 }
 

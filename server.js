@@ -56,7 +56,7 @@ const MIME = {
   '.pdf': 'application/pdf',
 };
 
-// Vercel-style res wrapper: api/agent.js uses res.status(...).json(...)
+// Vercel-style res wrapper: api/agent.js uses res.status(...).json(...) and res.end()
 function wrapRes(realRes) {
   const wrapper = {
     setHeader: (k, v) => realRes.setHeader(k, v),
@@ -68,6 +68,7 @@ function wrapRes(realRes) {
       realRes.setHeader('content-type', 'application/json; charset=utf-8');
       realRes.end(JSON.stringify(obj));
     },
+    end: (data) => realRes.end(data),
   };
   return wrapper;
 }
@@ -132,8 +133,8 @@ function sendFile(res, filePath) {
 const server = http.createServer((req, res) => {
   const url = (req.url || '').split('?')[0];
   if (url === '/api/agent' || url === '/api/agent/') {
-    if (req.method !== 'POST') {
-      res.writeHead(405, { 'content-type': 'application/json', Allow: 'POST' });
+    if (req.method !== 'POST' && req.method !== 'OPTIONS') {
+      res.writeHead(405, { 'content-type': 'application/json', Allow: 'POST, OPTIONS' });
       res.end(JSON.stringify({ error: 'Method not allowed.' }));
       return;
     }

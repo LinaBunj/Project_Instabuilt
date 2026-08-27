@@ -107,6 +107,18 @@ function trimMessages(list, max) {
   return arr;
 }
 
+// CORS — the widget is fetched from same-origin, but the function must also
+// work from other origins (preview panes, file:// pages, custom domains).
+// Echo the request origin when present so credentialed browsers stay happy.
+function applyCors(res, origin) {
+  const allowOrigin = origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+  if (origin) res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Max-Age', '86400');
+}
+
 // ---- Anthropic-shaped messages → OpenAI (Groq) chat format ----
 function toOpenAI(messages) {
   const out = [];
@@ -150,6 +162,13 @@ function toOpenAI(messages) {
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
+  applyCors(res, req.headers && req.headers.origin);
+
+  // Browser preflight (CORS): answer immediately, no logic needed.
+  if (req.method === 'OPTIONS') {
+    res.status(204).end();
+    return;
+  }
 
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
