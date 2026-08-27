@@ -220,13 +220,16 @@ h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 500; line-height
 .brand-name { font-family: var(--font-display); font-size: 1.28rem; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
 .brand-name b { font-weight: 600; }
 
-/* Real InstaBuilt logo — insta_logo.png (light bg) / insta_logo-white.png (dark bg) */
-.brand-logo { height: 56px; width: auto; display: block; }
-/* Dark surfaces: white letters + green mark */
-.site-header--transparent .brand-logo,
-.site-footer .brand-logo { content: url('images/insta_logo-white.png'); }
+/* Real InstaBuilt logo — light + white letter variants (one shown per surface) */
+.brand-logo { height: 64px; width: auto; display: block; }
+.brand-logo--dark { display: none; }
+/* Dark surfaces: white-letter logo */
+.site-header--transparent .brand-logo--light,
+.site-footer .brand-logo--light { display: none; }
+.site-header--transparent .brand-logo--dark,
+.site-footer .brand-logo--dark { display: block; }
 @media (max-width: 640px) {
-  .brand-logo { height: 36px; }
+  .brand-logo { height: 40px; }
 }
 
 .site-nav { margin-left: auto; }
