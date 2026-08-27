@@ -211,6 +211,24 @@ const CATALOG = [
 
 export const FURNITURE_CATALOG = CATALOG;
 
+const INFO = {
+  'couch': { name: 'Sofa', desc: 'Contemporary three-seat living-room sofa.', cost: 'Included' },
+  'armchair': { name: 'Armchair', desc: 'Upholstered accent armchair.', cost: 'Included' },
+  'coffee-table': { name: 'Coffee table', desc: 'Solid wood coffee table.', cost: 'Included' },
+  'dining-table': { name: 'Dining table', desc: 'Solid wood dining table for six.', cost: 'Included' },
+  'chair': { name: 'Chair', desc: 'Solid wood dining chair.', cost: 'Included' },
+  'bed': { name: 'Bed', desc: 'Double bed with mattress.', cost: 'Included' },
+  'wardrobe': { name: 'Wardrobe', desc: 'Built-in wardrobe.', cost: 'Included' },
+  'bookshelf': { name: 'Bookshelf', desc: 'Floor-standing bookshelf.', cost: 'Included' },
+  'tv': { name: 'TV', desc: 'Media console with TV.', cost: 'Optional' },
+  'floor-lamp': { name: 'Floor lamp', desc: 'Warm ambient floor lighting.', cost: 'Included', energy: 'Low' },
+  'table-lamp': { name: 'Table lamp', desc: 'Warm accent table light.', cost: 'Included', energy: 'Low' },
+  'rug': { name: 'Rug', desc: 'Soft area rug.', cost: 'Included' },
+  'plant': { name: 'Plant', desc: 'Indoor plant.', cost: 'Included' },
+  'kitchen-counter': { name: 'Kitchen', desc: 'Full fitted kitchen with oak worktop.', cost: 'Interior package', energy: 'High-efficiency' },
+  'bathpod': { name: 'Bathpod', desc: 'Factory-finished bathroom pod.', cost: 'Included', energy: 'Water-efficient' }
+};
+
 export function createInteriorDesigner(scene, furnitureGroup, domElement, camera) {
   const raycaster = new THREE.Raycaster();
   const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -FLOOR_TOP);
@@ -218,6 +236,7 @@ export function createInteriorDesigner(scene, furnitureGroup, domElement, camera
   let tool = null; // { kind: 'place', id } | { kind: 'erase' }
   let ghost = null;
   let bounds = { minX: -2, maxX: 2, minZ: -2, maxZ: 2 };
+  let onChange = null;
   const pointer = new THREE.Vector2();
 
   function buildDef(id) {
@@ -252,8 +271,10 @@ export function createInteriorDesigner(scene, furnitureGroup, domElement, camera
     const g = buildDef(id);
     if (!g) return;
     g.position.set(x, FLOOR_TOP, z);
+    g.userData.info = INFO[id] || { name: id, desc: '' };
     furnitureGroup.add(g);
     items.push({ id: id, type: id, group: g });
+    if (onChange) onChange();
     return g;
   }
 
@@ -261,6 +282,7 @@ export function createInteriorDesigner(scene, furnitureGroup, domElement, camera
     const idx = items.findIndex(function (it) { return it.group === g; });
     if (idx >= 0) items.splice(idx, 1);
     furnitureGroup.remove(g);
+    if (onChange) onChange();
     g.traverse(function (o) {
       if (o.geometry) o.geometry.dispose();
       if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(function (m) { m.dispose(); });
@@ -363,6 +385,12 @@ export function createInteriorDesigner(scene, furnitureGroup, domElement, camera
         counts[label] = (counts[label] || 0) + 1;
       });
       return Object.keys(counts).map(function (k) { return k + ' ×' + counts[k]; });
+    },
+    setOnChange: function (fn) { onChange = fn; },
+    interactive: function () {
+      return items.map(function (it) {
+        return { id: it.id, type: it.type, group: it.group, info: it.group.userData.info || { name: it.id, desc: '' } };
+      });
     },
     dispose: function () {
       domElement.removeEventListener('pointermove', onPointerMove);

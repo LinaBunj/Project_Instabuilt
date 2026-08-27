@@ -219,6 +219,9 @@ export function createWalkthroughMode(camera, renderer, getBounds, getColliders)
     update: update,
     dispose: dispose,
     requestLock: requestLock,
-    isLocked: function () { return state.locked; }
+    isLocked: function () { return state.locked; },
+    isActive: function () { return state.enabled; },
+    getPosition: function () { return { x: camera.position.x, z: camera.position.z }; },
+    getYaw: function () { return state.yaw; }
   };
 }

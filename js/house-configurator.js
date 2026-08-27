@@ -112,6 +112,7 @@ export function render(house, config) {
   const doorMat = mat(0x4d5c2b, { roughness: 0.6 });
   const door = box(1.0, 2.1, 0.06, doorMat);
   door.position.set(width / 2 - 1.6, 1.05, depth / 2 + t / 2 + 0.03);
+  door.userData.info = { name: 'Front door', desc: 'Precision-fit entrance door.', cost: 'Included', energy: 'Air-tight (KfW40)' };
   house.add(door);
 
   // Windows
@@ -154,11 +155,13 @@ export function render(house, config) {
       const panel = box(2.0, 0.05, 1.2, mat(0x1b2a44, { roughness: 0.2, metalness: 0.8 }));
       panel.position.set(0, wallH + (isGable ? DIMS.roofGableHeight / 2 : 0.35) + 0.06, depth / 4);
       panel.rotation.x = isGable ? -0.35 : -0.1;
+      panel.userData.info = { name: 'Solar roof', desc: 'Photovoltaic panels to reduce grid energy use.', cost: '€6,000', energy: 'Generates power' };
       house.add(panel);
     }
     if (s.visual === 'battery') {
       const bat = box(0.7, 1.1, 0.3, mat(0xffffff, { roughness: 0.4 }));
       bat.position.set(width / 2 + 0.35, DIMS.slabThickness + 0.55, -depth / 2 + 1.2);
+      bat.userData.info = { name: 'Battery storage', desc: 'Stores solar energy for evening or peak use.', cost: '€4,000', energy: 'Offsets peak load' };
       house.add(bat);
     }
     if (s.visual === 'light') {
@@ -167,6 +170,7 @@ export function render(house, config) {
         mat(0xfff2b0, { emissive: 0xffe27a, emissiveIntensity: 1.2 })
       );
       bulb.position.set(0, wallH - 0.3, 0);
+      bulb.userData.info = { name: 'Smart-home package', desc: 'Connected lighting and smart devices.', cost: '€8,000', energy: 'Automation' };
       house.add(bulb);
     }
   });
