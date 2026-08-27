@@ -66,7 +66,8 @@
     timeline: document.getElementById('track-timeline'),
     demoNote: document.getElementById('track-demo-note'),
     journey: document.getElementById('track-journey'),
-    journeyStatus: document.getElementById('track-journey-status')
+    journeyStatus: document.getElementById('track-journey-status'),
+    debug: document.getElementById('track-debug')
   };
 
   let session = null;
@@ -178,9 +179,23 @@
     renderTimeline();
   }
 
-  function showEmpty() {
+  // DEBUG (temporary): visible one-line status for quick testing.
+  function setDebug(msg) {
+    if (el.debug) el.debug.textContent = msg || '';
+  }
+
+  function showEmpty(msg) {
     el.empty.hidden = false;
     el.content.hidden = true;
+    const h = el.empty.querySelector('h2');
+    const p = el.empty.querySelector('p');
+    if (msg) {
+      h.textContent = 'Tracking unavailable';
+      p.textContent = msg;
+    } else {
+      h.textContent = 'Start your project first';
+      p.textContent = 'Create and save a house design to begin tracking your build.';
+    }
   }
 
   function showContent() {
@@ -215,24 +230,57 @@
     try { session = await IB.ready; } catch (e) { /* redirected by guard */ }
     if (!session) return;
 
-    const userId = session.user.id;
+    // Fresh auth — don't trust a possibly stale guard session; ask Supabase.
+    let user = null;
+    try {
+      const got = await IB.supabase.auth.getUser();
+      if (got && got.error) console.error('[track] auth.getUser error:', got.error);
+      user = (got && got.data && got.data.user) || null;
+    } catch (e) {
+      console.error('[track] auth.getUser threw:', e);
+    }
+    if (!user) user = session.user;
+    const userId = user.id;
+    console.log('[track] user_id =', userId);
+    setDebug('user ' + userId + ' \u00b7 loading design\u2026');
 
-    // A tracking project requires a saved house design.
-    const design = await IB.supabase.from('house_designs')
-      .select('id')
+    // ---- 1) Find the latest saved house design ----
+    const designQuery = IB.supabase.from('house_designs')
+      .select('id, product_line, size, user_id, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (!design.data) { showEmpty(); return; }
+      .limit(1);
+    const design = await designQuery.maybeSingle();
+    console.log('[track] house_designs result:', { data: design.data, error: design.error });
 
-    // Load the latest tracking row (or create one at Stage 1).
+    if (design.error) {
+      console.error('[track] house_designs query failed:', design.error);
+      setDebug('Design query error: ' + design.error.message);
+      showEmpty('Could not load your design: ' + design.error.message);
+      return;
+    }
+    if (!design.data) {
+      setDebug('Design found: no \u00b7 rows returned: 0');
+      showEmpty();
+      return;
+    }
+    setDebug('Design found: yes \u00b7 rows returned: 1 \u00b7 design id ' + design.data.id);
+
+    // ---- 2) Load the latest tracking row (or auto-create one at Stage 1) ----
     const loaded = await IB.supabase.from('project_tracking')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
+    console.log('[track] project_tracking load result:', { data: loaded.data, error: loaded.error });
+
+    if (loaded.error) {
+      console.error('[track] project_tracking query failed:', loaded.error);
+      setDebug('Tracking query error: ' + loaded.error.message);
+      showEmpty('Could not load your tracking data: ' + loaded.error.message);
+      return;
+    }
     row = loaded.data;
 
     if (!row) {
@@ -245,8 +293,17 @@
         })
         .select()
         .single();
-      if (created.error) { showEmpty(); return; }
+      console.log('[track] project_tracking insert result:', { data: created.data, error: created.error });
+      if (created.error) {
+        console.error('[track] project_tracking insert failed:', created.error);
+        setDebug('Tracking create error: ' + created.error.message);
+        showEmpty('Could not start tracking: ' + created.error.message);
+        return;
+      }
       row = created.data;
+      setDebug('Tracking row created at Stage 1.');
+    } else {
+      setDebug('Tracking row loaded \u00b7 stage ' + row.current_stage);
     }
 
     showContent();

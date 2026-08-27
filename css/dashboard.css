@@ -518,6 +518,15 @@ html:not(.webgl) #designer-fallback { display: block; }
 .track-journey-status { font-weight: 600; color: var(--clay-deep); margin: 0 0 1.1rem; }
 .track-journey .track-step__label { font-size: 0.72rem; }
 
+/* Temporary debug line (remove once tracking is confirmed working) */
+.track-debug {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0.25rem 0 1rem;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  word-break: break-all;
+}
+
 /* =========================================================================
    House Designer — game feel ("Design Your Dream Home")
    ========================================================================= */
