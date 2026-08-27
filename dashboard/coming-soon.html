@@ -38,8 +38,6 @@
           <li><a href="energy-calculator.html">Energy Calculator</a></li>
           <li><a href="smart-home-configurator.html">Smart-Home</a></li>
           <li><a href="project-tracking.html">Project Tracking</a></li>
-          <li class="dash-nav__label">Coming soon</li>
-          <li><a href="coming-soon.html?feature=ai">AI Agent</a></li>
           <li class="dash-nav__label">Account</li>
           <li><a href="profile.html">Profile</a></li>
         </ul>
@@ -67,12 +65,6 @@
             <p>Follow your build from factory to handover, in real time.</p>
             <span class="dash-tile__link">Open tracker <span class="arrow" aria-hidden="true">→</span></span>
           </a>
-          <a class="dash-tile" href="coming-soon.html?feature=ai">
-            <span class="tag">Coming soon</span>
-            <h3>AI Agent</h3>
-            <p>A design assistant to answer questions and refine your build.</p>
-            <span class="dash-tile__link">Preview <span class="arrow" aria-hidden="true">→</span></span>
-          </a>
         </div>
       </main>
     </div>
@@ -88,8 +80,7 @@
       var FEATURES = {
         energy:    { title: 'Energy Calculator',        desc: 'Model heating demand and KfW40 performance for your design.' },
         'smart-home': { title: 'Smart-Home Configurator', desc: 'Choose connected lighting, climate and security for your home.' },
-        tracking:  { title: 'Project Tracking',         desc: 'Follow your build from factory to handover, in real time.' },
-        ai:        { title: 'AI Agent',                 desc: 'A design assistant to answer questions and refine your build.' }
+        tracking:  { title: 'Project Tracking',         desc: 'Follow your build from factory to handover, in real time.' }
       };
       var feature = null;
       try { feature = new URLSearchParams(window.location.search).get('feature'); } catch (e) { /* ignore */ }
