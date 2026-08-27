@@ -165,10 +165,18 @@ export function createGameUI(opts) {
     return o || null;
   }
 
-  // Orbit: click an object to see its info.
+  // Orbit: click an object to see its info (but not after a drag / while placing).
+  let cDownX = 0;
+  let cDownY = 0;
+  if (renderer && renderer.domElement) {
+    renderer.domElement.addEventListener('pointerdown', function (e) { cDownX = e.clientX; cDownY = e.clientY; });
+  }
   function onOrbitClick(e) {
     if (mode() !== 'orbit') return;
     if (interior.getTool && interior.getTool()) return; // placing furniture — skip
+    const dx = e.clientX - cDownX;
+    const dy = e.clientY - cDownY;
+    if (dx * dx + dy * dy > 25) return; // was an orbit drag — skip
     setRayFromEvent(e);
     const root = pickRoot();
     if (root) showInfoPopup(root, e.clientX, e.clientY);

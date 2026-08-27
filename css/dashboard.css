@@ -512,3 +512,79 @@ html:not(.webgl) #designer-fallback { display: block; }
   .track-step__node { width: 28px; height: 28px; font-size: 0.8rem; }
   .track-step__connector { top: 13px; }
 }
+
+/* =========================================================================
+   House Designer — game feel ("Design Your Dream Home")
+   ========================================================================= */
+
+/* Step tracker (reuses the project-tracker node classes) */
+.game-step-track { list-style: none; display: flex; gap: 2px; margin: 0.2rem 0 0.6rem; padding: 0; }
+.game-step-track .track-step { flex: 1; }
+.game-step-track .track-step__node { width: 26px; height: 26px; font-size: 0.78rem; }
+.game-step-track .track-step__label { font-size: 0.6rem; margin-top: 0.35rem; }
+.game-step-caption { font-family: var(--font-serif); font-size: 1rem; color: var(--clay-deep); font-weight: 600; margin: 0 0 1rem; }
+
+/* Wizard */
+.game-step-title { display: block; font-family: var(--font-serif); font-size: 1.15rem; margin-bottom: 0.9rem; color: var(--ink); }
+.game-wizard-nav { display: flex; gap: 0.6rem; margin: 1.2rem 0 0.6rem; }
+.game-wizard-nav .btn { flex: 1; margin-top: 0; }
+.viewer-toolbar { flex-wrap: wrap; max-width: calc(100% - 2rem); }
+#sound-toggle.is-on { background: var(--clay); border-color: var(--clay); color: #fff; }
+
+/* Feedback pulse flash over the viewer */
+.game-flash {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none; opacity: 0;
+  background: radial-gradient(circle at 50% 45%, rgba(107, 124, 63, 0.20), transparent 55%);
+  transition: opacity 0.4s ease;
+}
+.game-flash.is-on { opacity: 1; }
+
+/* Mini-map overlay (walkthrough) */
+.mm-wrap {
+  position: absolute; top: 14px; right: 14px; z-index: 4; pointer-events: none;
+  background: rgba(255, 255, 255, 0.9); border: 1px solid var(--line); border-radius: 10px;
+  padding: 6px; box-shadow: var(--shadow-sm);
+}
+.mm-wrap canvas { display: block; }
+.mm-title { display: block; text-align: center; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 4px; font-weight: 600; }
+
+/* Walkthrough crosshair */
+.wt-crosshair { position: absolute; top: 50%; left: 50%; z-index: 4; width: 22px; height: 22px; transform: translate(-50%, -50%); pointer-events: none; }
+.wt-crosshair::before, .wt-crosshair::after { content: ''; position: absolute; background: rgba(255, 255, 255, 0.85); box-shadow: 0 0 3px rgba(0, 0, 0, 0.5); }
+.wt-crosshair::before { left: 50%; top: 0; width: 2px; height: 100%; transform: translateX(-50%); }
+.wt-crosshair::after { top: 50%; left: 0; height: 2px; width: 100%; transform: translateY(-50%); }
+
+/* Look-at label (walkthrough) */
+.game-look-label {
+  position: absolute; z-index: 5; transform: translate(-50%, -135%); pointer-events: none;
+  background: rgba(10, 10, 10, 0.82); color: #fff; font-size: 0.72rem; font-weight: 600;
+  padding: 0.35rem 0.6rem; border-radius: 8px; white-space: nowrap; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.game-look-label strong { font-weight: 700; margin-right: 0.35rem; }
+.game-look__cost { color: #c9d2a8; }
+
+/* Info popup (orbit click) */
+.game-info-popup {
+  position: absolute; z-index: 6; width: 200px; background: #fff; border: 1px solid var(--line);
+  border-radius: 12px; padding: 0.75rem 0.85rem; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+.game-info-popup strong { font-size: 0.92rem; }
+.game-info-popup p { margin: 0.35rem 0 0; font-size: 0.8rem; color: var(--muted); }
+.game-info__close { position: absolute; top: 6px; right: 8px; border: none; background: none; color: var(--muted); font-size: 1.1rem; cursor: pointer; }
+.game-info__close:hover { color: var(--ink); }
+.game-info__row { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.78rem; margin-top: 0.4rem; color: var(--muted); }
+.game-info__row b { color: var(--ink); }
+
+/* Room toast (walkthrough) */
+.game-room-toast {
+  position: absolute; top: 76px; left: 50%; transform: translateX(-50%); z-index: 6; pointer-events: none;
+  background: var(--clay); color: #fff; font-size: 0.82rem; font-weight: 600; padding: 0.45rem 0.95rem;
+  border-radius: 999px; opacity: 0; transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.game-room-toast.is-on { opacity: 1; transform: translateX(-50%) translateY(4px); }
+
+@media (max-width: 560px) {
+  .mm-wrap { top: 8px; right: 8px; }
+  .game-step-track .track-step__label { font-size: 0.52rem; }
+  .game-step-track .track-step__node { width: 22px; height: 22px; font-size: 0.68rem; }
+}
