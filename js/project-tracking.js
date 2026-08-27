@@ -33,13 +33,40 @@
     { name: 'Handover / Delivery',                 short: 'Handover',   desc: 'Final quality checks complete \u2014 your keys are handed over.' }
   ];
 
+  // ---- Company build journey (is it underway, and which phase?) ----
+  // Maps the 6 admin stages onto the customer-facing pipeline:
+  //   not started -> being built -> getting shipped -> building on site -> delivered
+  const JOURNEY = [
+    { short: 'Not started',      name: 'construction has not begun yet' },
+    { short: 'Being built',      name: 'your home is being built at the factory' },
+    { short: 'Getting shipped',  name: 'your modules are being shipped to your site' },
+    { short: 'Building on site', name: 'your home is being built on site' },
+    { short: 'Delivered',        name: 'your home is delivered' }
+  ];
+
+  function journeyIndex(stage) {
+    if (stage <= 1) return 0;   // not started
+    if (stage === 2) return 1;  // being built (factory)
+    if (stage <= 4) return 2;   // getting shipped (site prep runs in parallel)
+    if (stage === 5) return 3;  // building on site
+    return 4;                   // delivered
+  }
+
+  function journeyStatus(stage) {
+    if (stage >= 6) return 'Delivered \u2014 your home is complete and handed over.';
+    const idx = journeyIndex(stage);
+    return (stage >= 2 ? 'In progress' : 'Not started') + ' \u2014 ' + JOURNEY[idx].name + '.';
+  }
+
   const el = {
     empty: document.getElementById('track-empty'),
     content: document.getElementById('track-content'),
     stageLine: document.getElementById('track-stage-line'),
     progress: document.getElementById('track-progress'),
     timeline: document.getElementById('track-timeline'),
-    demoNote: document.getElementById('track-demo-note')
+    demoNote: document.getElementById('track-demo-note'),
+    journey: document.getElementById('track-journey'),
+    journeyStatus: document.getElementById('track-journey-status')
   };
 
   let session = null;
@@ -52,20 +79,19 @@
     return 'Upcoming';
   }
 
-  // ---------- Progress bar ----------
-  function renderProgress() {
-    el.progress.innerHTML = '';
-    STAGES.forEach(function (s, i) {
-      const num = i + 1;
+  // ---------- Shared stepper builder ----------
+  function buildSteps(container, items, currentIndex) {
+    container.innerHTML = '';
+    items.forEach(function (s, i) {
       const li = document.createElement('li');
       li.className = 'track-step';
-      if (num < row.current_stage) li.classList.add('is-done');
-      else if (num === row.current_stage) li.classList.add('is-current');
+      if (i < currentIndex) li.classList.add('is-done');
+      else if (i === currentIndex) li.classList.add('is-current');
       else li.classList.add('is-upcoming');
 
       if (i > 0) {
         const conn = document.createElement('span');
-        conn.className = 'track-step__connector' + (num <= row.current_stage ? ' is-filled' : '');
+        conn.className = 'track-step__connector' + (i <= currentIndex ? ' is-filled' : '');
         conn.setAttribute('aria-hidden', 'true');
         li.appendChild(conn);
       }
@@ -73,7 +99,7 @@
       const node = document.createElement('span');
       node.className = 'track-step__node';
       node.setAttribute('aria-hidden', 'true');
-      node.textContent = num < row.current_stage ? '\u2713' : num;
+      node.textContent = i < currentIndex ? '\u2713' : (i + 1);
       li.appendChild(node);
 
       const label = document.createElement('span');
@@ -81,8 +107,19 @@
       label.textContent = s.short;
       li.appendChild(label);
 
-      el.progress.appendChild(li);
+      container.appendChild(li);
     });
+  }
+
+  // ---------- Progress bar (6 admin stages) ----------
+  function renderProgress() {
+    buildSteps(el.progress, STAGES, row.current_stage - 1);
+  }
+
+  // ---------- Company build journey (started? which phase?) ----------
+  function renderJourney() {
+    el.journeyStatus.textContent = journeyStatus(row.current_stage);
+    buildSteps(el.journey, JOURNEY, journeyIndex(row.current_stage));
   }
 
   // ---------- Vertical timeline ----------
@@ -137,6 +174,7 @@
   function render() {
     el.stageLine.textContent = 'Stage ' + row.current_stage + ' of ' + MAX_STAGE + ' \u2014 ' + statusOf(row.current_stage);
     renderProgress();
+    renderJourney();
     renderTimeline();
   }
 
