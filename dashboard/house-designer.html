@@ -12,7 +12,25 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/main.css">
   <link rel="stylesheet" href="../css/dashboard.css">
-  <script>document.documentElement.classList.add('js');</script>
+  <script>
+    document.documentElement.classList.add('js');
+    (function () {
+      try {
+        var c = document.createElement('canvas');
+        if (window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl'))) {
+          document.documentElement.classList.add('webgl');
+        }
+      } catch (e) { /* no webgl */ }
+      // Safety net: if the 3D module fails to initialise (e.g. CDN down), fall
+      // back to the classic preset form rather than showing an empty viewer.
+      window.setTimeout(function () {
+        if (document.documentElement.classList.contains('webgl') &&
+            !document.documentElement.classList.contains('designer-3d-ready')) {
+          document.documentElement.classList.remove('webgl');
+        }
+      }, 12000);
+    })();
+  </script>
 </head>
 <body>
   <div class="auth-loader" role="status" aria-live="polite"><div class="spinner" aria-hidden="true"></div><p>Signing you in…</p></div>
@@ -43,35 +61,86 @@
           <li><a href="profile.html">Profile</a></li>
         </ul>
       </nav>
-      <main class="dash-main" id="main">
-        <h1>House Designer</h1>
-        <p class="lead">Configure your build — we'll turn it into a live estimate.</p>
 
-        <form id="designer-form" class="dash-card" novalidate>
-          <div class="field">
-            <label for="product_line">Product line</label>
-            <select id="product_line" name="product_line" required></select>
-          </div>
-          <div class="field">
-            <label for="size">Size</label>
-            <select id="size" name="size" required></select>
-          </div>
-          <div class="field">
-            <label>Exterior materials</label>
-            <div class="check-group" id="materials"></div>
-          </div>
-          <div class="field">
-            <label>Interior selections</label>
-            <div class="check-group" id="interiors"></div>
-          </div>
-          <p class="form-status" role="status" aria-live="polite"></p>
-          <button class="btn btn-primary" type="submit">Save design &amp; estimate<span class="arrow" aria-hidden="true">→</span></button>
-        </form>
+      <main class="dash-main dash-main--designer" id="main">
 
-        <div class="dash-card">
-          <h2>Saved designs</h2>
-          <ul id="saved-designs"></ul>
+        <!-- ============ 3D configurator (requires WebGL) ============ -->
+        <div class="designer">
+          <aside class="designer-panel" aria-label="Designer options">
+            <h1>House Designer</h1>
+            <p class="lead">Configure your build — watch it update in 3D, then get a live estimate.</p>
+
+            <div class="field">
+              <label for="product_line">Product line</label>
+              <select id="product_line"></select>
+            </div>
+            <div class="field">
+              <label for="size">Size variant</label>
+              <select id="size"></select>
+            </div>
+            <fieldset class="field">
+              <legend>Exterior material &amp; colour</legend>
+              <div class="chip-group" id="materials"></div>
+            </fieldset>
+            <fieldset class="field">
+              <legend>Interior package</legend>
+              <div class="chip-group" id="interiors"></div>
+            </fieldset>
+            <fieldset class="field">
+              <legend>Smart-home add-ons <small>(visual only)</small></legend>
+              <div class="chip-group" id="smart"></div>
+            </fieldset>
+
+            <p class="form-status" role="status" aria-live="polite"></p>
+            <button class="btn btn-primary" id="save-design" type="button">Save design &amp; estimate<span class="arrow" aria-hidden="true">→</span></button>
+          </aside>
+
+          <section class="designer-viewer" aria-label="3D house viewer">
+            <div id="viewer"></div>
+            <div class="viewer-loading" id="viewer-loading"><div class="spinner" aria-hidden="true"></div><p>Loading 3D view…</p></div>
+            <div class="viewer-toolbar">
+              <div class="seg" role="group" aria-label="View mode">
+                <button class="seg__btn is-active" type="button" data-mode="orbit">Orbit</button>
+                <button class="seg__btn" type="button" data-mode="walkthrough">Walkthrough</button>
+              </div>
+              <button class="btn btn-ghost btn-sm" id="reset-view" type="button">Reset view</button>
+            </div>
+            <div class="walkthrough-hint" id="walkthrough-hint">Click the view to look around · WASD / arrows to move · Esc to release</div>
+          </section>
         </div>
+
+        <!-- ============ Fallback (no WebGL): classic preset form ============ -->
+        <div id="designer-fallback">
+          <h1>House Designer</h1>
+          <p class="lead">Your browser doesn't support WebGL, so the 3D view is unavailable. You can still configure and save your build below.</p>
+
+          <form id="designer-form-fb" class="dash-card" novalidate>
+            <div class="field">
+              <label for="product_line_fb">Product line</label>
+              <select id="product_line_fb" name="product_line" required></select>
+            </div>
+            <div class="field">
+              <label for="size_fb">Size</label>
+              <select id="size_fb" name="size" required></select>
+            </div>
+            <div class="field">
+              <label>Exterior materials</label>
+              <div class="check-group" id="materials_fb"></div>
+            </div>
+            <div class="field">
+              <label>Interior selections</label>
+              <div class="check-group" id="interiors_fb"></div>
+            </div>
+            <p class="form-status" role="status" aria-live="polite"></p>
+            <button class="btn btn-primary" type="submit">Save design &amp; estimate<span class="arrow" aria-hidden="true">→</span></button>
+          </form>
+
+          <div class="dash-card">
+            <h2>Saved designs</h2>
+            <ul id="saved-designs-fb"></ul>
+          </div>
+        </div>
+
       </main>
     </div>
   </div>
@@ -80,6 +149,16 @@
   <script src="../js/supabase-client.js"></script>
   <script src="../js/auth.js"></script>
   <script src="../js/auth-guard.js"></script>
-  <script src="../js/house-designer.js"></script>
+  <script src="../js/house-designer-fallback.js"></script>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+  <script type="module" src="../js/house-designer.js"></script>
 </body>
 </html>

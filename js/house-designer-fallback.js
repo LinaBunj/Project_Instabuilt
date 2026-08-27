@@ -6,8 +6,6 @@
 (function () {
   'use strict';
 
-  if (document.documentElement.classList.contains('webgl')) return;
-
   var IB = window.INSTABUILT;
   if (!IB) return;
 
