@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart-Home Configurator — InstaBuilt</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" type="image/svg+xml" href="../images/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body>
+  <div class="auth-loader" role="status" aria-live="polite"><div class="spinner" aria-hidden="true"></div><p>Signing you in…</p></div>
+
+  <div class="app">
+    <header class="dash-topbar">
+      <a class="brand" href="../index.html" aria-label="InstaBuilt — home">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#0A0A0A"/><g fill="#FFFFFF"><rect x="7" y="7" width="8" height="8" rx="1.5"/><rect x="17" y="7" width="8" height="8" rx="1.5"/><rect x="7" y="17" width="8" height="8" rx="1.5"/><rect x="17" y="17" width="8" height="8" rx="1.5" fill="#6B7C3F"/></g></svg>
+        <span class="brand-name">Insta<b>Built</b></span>
+      </a>
+      <div class="dash-topbar__right">
+        <span class="dash-user" data-user-email>…</span>
+        <button class="btn btn-ghost btn-sm" type="button" data-signout>Sign out</button>
+      </div>
+    </header>
+    <div class="dash">
+      <nav class="dash-sidebar" aria-label="Dashboard">
+        <ul class="dash-nav">
+          <li><a href="index.html">Overview</a></li>
+          <li><a href="house-designer.html">House Designer</a></li>
+          <li><a href="price-calculator.html">Price Calculator</a></li>
+          <li><a href="energy-calculator.html">Energy Calculator</a></li>
+          <li class="dash-nav__label">Coming soon</li>
+          <li><a href="smart-home-configurator.html" aria-current="page">Smart-Home</a></li>
+          <li><a href="coming-soon.html?feature=tracking">Project Tracking</a></li>
+          <li><a href="coming-soon.html?feature=ai">AI Agent</a></li>
+          <li class="dash-nav__label">Account</li>
+          <li><a href="profile.html">Profile</a></li>
+        </ul>
+      </nav>
+
+      <main class="dash-main" id="main">
+        <div class="smart">
+          <h1>Smart-Home Configurator</h1>
+          <p class="lead">Choose connected features for each room, then preview your smart home.</p>
+          <p class="estimate-note">Visual preview only — no devices are connected. Selected features feed into your price and energy estimates.</p>
+
+          <div class="smart__toolbar">
+            <div class="seg" role="group" aria-label="View">
+              <button class="seg__btn is-active" type="button" data-view="diagram">House Diagram</button>
+              <button class="seg__btn" type="button" data-view="panel">Control Panel</button>
+            </div>
+            <span class="smart__count" id="feature-count">0 features</span>
+          </div>
+
+          <div class="smart__body">
+            <!-- View 1: House diagram -->
+            <div class="smart__view" id="view-diagram">
+              <div class="smart__diagram-wrap" id="diagram-wrap">
+                <svg id="floorplan" viewBox="0 0 360 330" role="img" aria-label="House floor plan"></svg>
+                <div class="smart__popover" id="popover" hidden>
+                  <div class="smart__popover-head">
+                    <strong id="popover-title">Room</strong>
+                    <button class="smart__popover-close" id="popover-close" type="button" aria-label="Close">×</button>
+                  </div>
+                  <div class="smart__popover-body" id="popover-body"></div>
+                </div>
+              </div>
+              <p class="smart__hint">Click a room to browse its smart features. Rooms with selections show a green dot.</p>
+            </div>
+
+            <!-- View 2: Control panel -->
+            <div class="smart__view" id="view-panel" hidden>
+              <div class="smart__panel" id="panel"></div>
+            </div>
+          </div>
+
+          <p class="calc__save" id="save-status" role="status" aria-live="polite"></p>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../js/supabase-client.js"></script>
+  <script src="../js/auth.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script type="module" src="../js/smart-home-configurator.js"></script>
+</body>
+</html>
